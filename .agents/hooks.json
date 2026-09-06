@@ -1,0 +1,11 @@
+{
+  "auto-export-conversation": {
+    "enabled": true,
+    "Stop": [
+      {
+        "type": "command",
+        "command": "python3 .agents/scripts/export_conversation.py /Users/amol/Downloads"
+      }
+    ]
+  }
+}
