@@ -1,8 +1,7 @@
 /**
  * SkyGuard AI — Weather Data Trust Intelligence Engine (PS 73)
- * Evaluates real-time sensor measurements against physical laws, diurnal envelopes,
- * and spatial peer clusters to calculate composite Data Trust Scores, ranked evidence,
- * and traceable raw vs imputed values.
+ * Hybrid Client: Evaluates telemetry via live Python ML Backend (/api/predict)
+ * with automatic zero-downtime client-side fallback.
  */
 
 class WeatherDataTrustEngine {
@@ -13,7 +12,6 @@ class WeatherDataTrustEngine {
       pressure: { mean: 1012.4, std: 2.8, expectedMin: 1004.0, expectedMax: 1018.0, maxRatePerMin: 2.0 }
     };
 
-    // Rolling history
     this.history = {
       temp: [],
       humidity: [],
@@ -21,23 +19,135 @@ class WeatherDataTrustEngine {
     };
     this.maxHistory = 60;
 
-    // Consecutive identical values tracker for frozen sensor detection
     this.freezeTracker = {
       temp: { val: null, count: 0 },
       humidity: { val: null, count: 0 },
       pressure: { val: null, count: 0 }
     };
 
-    // Sensor health tracking (0 to 100)
     this.sensorHealth = {
-      temp: 82, // AWS-JPR-04 degraded state
+      temp: 82,
       humidity: 94,
       pressure: 91
     };
 
     this.lastAnalysis = null;
+    this.apiUrl = '/api/predict';
   }
 
+  /**
+   * Primary asynchronous entry point called by stream-engine.js
+   */
+  async analyzeReadingAsync(reading) {
+    const rawT = reading.temp;
+    const rawH = reading.humidity;
+    const rawP = reading.pressure;
+    const stationId = reading.stationId || 'AWS-JPR-04';
+
+    // Update tracking state
+    this.updateFreeze('temp', rawT);
+    this.updateFreeze('humidity', rawH);
+    this.updateFreeze('pressure', rawP);
+
+    // Prepare packet for Python backend
+    const payload = {
+      DATE: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      STATION: stationId === 'AWS-JPR-04' ? 42348 : (stationId === 'AWS-DEL-07' ? 42182 : 43279),
+      AIR_TEMP_C: rawT,
+      REL_HUMIDITY: rawH,
+      SLP_HPA: rawP,
+      DEW_POINT_C: parseFloat((rawT - ((100 - rawH) / 5)).toFixed(2))
+    };
+
+    try {
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        const ml = await response.json();
+        return this.mapBackendResponse(reading, ml);
+      }
+    } catch (err) {
+      console.warn("Backend /api/predict unreachable, using client heuristics:", err);
+    }
+
+    // Fallback to local heuristics if server is offline
+    return this.analyzeReading(reading);
+  }
+
+  /**
+   * Maps Python 3-Tier ML result into the dashboard UI format
+   */
+  mapBackendResponse(reading, ml) {
+    const rawT = reading.temp;
+    const rawH = reading.humidity;
+    const rawP = reading.pressure;
+    const stationId = reading.stationId || 'AWS-JPR-04';
+    const nearby = reading.nearbyStations || this.getNearbyMesonetContext(rawT, rawH, rawP, ml.is_anomaly);
+
+    // Sync sensor health with EWMA health score
+    if (typeof ml.sensor_health_pct === 'number') {
+      this.sensorHealth.temp = Math.round(ml.sensor_health_pct);
+    }
+
+    let dataTrustScore = 96;
+    let trustStatus = 'TRUSTED';
+    let severity = 'Nominal';
+
+    if (ml.fault_type === 'SPIKE') {
+      dataTrustScore = 12;
+      trustStatus = 'LOW TRUST';
+      severity = 'Critical';
+    } else if (ml.fault_type === 'STUCK_VALUE') {
+      dataTrustScore = 18;
+      trustStatus = 'LOW TRUST';
+      severity = 'Warning';
+    } else if (ml.fault_type === 'DRIFT') {
+      dataTrustScore = 48;
+      trustStatus = 'ATTENTION';
+      severity = 'Warning';
+    } else if (ml.fault_type === 'PHYSICAL_INCONSISTENCY') {
+      dataTrustScore = 8;
+      trustStatus = 'LOW TRUST';
+      severity = 'Critical';
+    }
+
+    const mode = ml.fault_type === 'SPIKE' ? 'spike' : (ml.fault_type === 'STUCK_VALUE' ? 'frozen' : 'normal');
+
+    return this.formatResult({
+      stationId,
+      parameter: 'Temperature',
+      rawVal: rawT,
+      imputedVal: ml.imputed_temp !== undefined ? ml.imputed_temp : rawT,
+      imputeConfidence: Math.round(ml.confidence_score || 92),
+      dataTrustScore,
+      trustStatus,
+      isAnomaly: !!ml.is_anomaly,
+      anomalyType: ml.fault_type ? ml.fault_type.replace('_', ' ') : 'Nominal Weather Measurement',
+      severity,
+      confidence: parseFloat((ml.confidence_score || 95.0).toFixed(1)),
+      rootCause: ml.action_required ? ml.action_required.split(':')[0] : 'Normal Sensor Operation',
+      action: ml.action_required || 'No maintenance required. Sensor data verified as trustworthy.',
+      evidence: this.buildEvidence(rawT, rawH, rawP, nearby, mode),
+      realityCheck: {
+        verdict: ml.is_anomaly ? 'ML CONFIRMED ANOMALY' : 'TRUSTED METEOROLOGICAL DATA',
+        confidence: parseFloat((ml.confidence_score || 95.0).toFixed(1)),
+        weatherScore: ml.is_anomaly ? Math.round(100 - ml.confidence_score) : Math.round(ml.confidence_score),
+        anomalyScore: ml.is_anomaly ? Math.round(ml.confidence_score) : Math.round(100 - ml.confidence_score),
+        summary: `Validated via Decision Tree & WMO Arbiter. Normalized gradient: ${ml.norm_rate_30m || 0}°C/30m.`
+      },
+      sensorHealth: this.sensorHealth,
+      reading,
+      nearby
+    });
+  }
+
+  /**
+   * Fallback heuristics engine (local browser evaluation)
+   */
   analyzeReading(reading) {
     const rawT = reading.temp;
     const rawH = reading.humidity;
@@ -45,15 +155,12 @@ class WeatherDataTrustEngine {
     const stationId = reading.stationId || 'AWS-JPR-04';
     const isMissing = !!reading.isMissing;
 
-    // Track freeze
     this.updateFreeze('temp', rawT);
     this.updateFreeze('humidity', rawH);
     this.updateFreeze('pressure', rawP);
 
-    // Nearby station mock
     const nearby = reading.nearbyStations || this.getNearbyMesonetContext(rawT, rawH, rawP, reading.forceAnomaly);
 
-    // 1. Missing data check
     if (isMissing || rawT === null || isNaN(rawT)) {
       return this.formatResult({
         stationId,
@@ -75,13 +182,12 @@ class WeatherDataTrustEngine {
       });
     }
 
-    // 2. Frozen sensor check
-    if (this.freezeTracker.humidity.count >= 10) {
+    if (this.freezeTracker.humidity.count >= 10 || this.freezeTracker.temp.count >= 3) {
       return this.formatResult({
         stationId,
-        parameter: 'Relative Humidity',
-        rawVal: rawH,
-        imputedVal: 65.2,
+        parameter: 'Temperature',
+        rawVal: rawT,
+        imputedVal: 25.1,
         imputeConfidence: 89,
         dataTrustScore: 18,
         trustStatus: 'LOW TRUST',
@@ -97,11 +203,9 @@ class WeatherDataTrustEngine {
       });
     }
 
-    // 3. Rate of change & Statistical deviations
     const prevT = this.history.temp.length > 0 ? this.history.temp[this.history.temp.length - 1] : rawT;
     const dTempDt = Math.abs(rawT - prevT);
 
-    // Update history
     this.history.temp.push(rawT);
     this.history.humidity.push(rawH);
     this.history.pressure.push(rawP);
@@ -111,8 +215,7 @@ class WeatherDataTrustEngine {
       this.history.pressure.shift();
     }
 
-    // Physics check: Thermodynamics & Spatial correlation
-    const isTempSpike = rawT >= 50.0 || (dTempDt >= 15.0 && Math.abs(rawT - nearby.tempMean) > 12.0);
+    const isTempSpike = rawT >= 50.0 || (dTempDt >= 8.0 && Math.abs(rawT - nearby.tempMean) > 10.0);
     const isRealStorm = reading.isRealStorm || (Math.abs(rawT - nearby.tempMean) < 3.0 && dTempDt > 4.0 && Math.abs(rawP - nearby.pressMean) < 2.0);
 
     let dataTrustScore = 96;
@@ -123,11 +226,10 @@ class WeatherDataTrustEngine {
     let confidence = 96.4;
     let rootCause = 'Normal Sensor Operation';
     let action = 'No maintenance required. Sensor data verified as trustworthy.';
-    let imputedVal = null;
-    let imputeConfidence = 0;
+    let imputedVal = rawT;
+    let imputeConfidence = 95.0;
 
     if (isRealStorm) {
-      // Genuine weather event (cold front or squall)
       dataTrustScore = 94;
       trustStatus = 'TRUSTED';
       isAnomaly = false;
@@ -136,7 +238,6 @@ class WeatherDataTrustEngine {
       rootCause = 'Atmospheric Frontal Advection';
       action = 'Verified as authentic meteorological event. Retain in numerical models.';
     } else if (isTempSpike) {
-      // Extreme Spike (e.g. 55.2°C)
       dataTrustScore = 12;
       trustStatus = 'LOW TRUST';
       isAnomaly = true;
@@ -145,22 +246,9 @@ class WeatherDataTrustEngine {
       confidence = 98.4;
       rootCause = 'Sudden Sensor Spike (Thermistor / ADC Failure)';
       action = 'Inspect sensor hardware and analog-to-digital converter immediately.';
-      imputedVal = 25.4; // AI estimated authentic value
+      imputedVal = prevT;
       imputeConfidence = 91.0;
       this.sensorHealth.temp = Math.max(60, this.sensorHealth.temp - 2);
-    } else if (Math.abs(rawH - nearby.humMean) > 20.0) {
-      // Humidity drift
-      dataTrustScore = 48;
-      trustStatus = 'ATTENTION';
-      isAnomaly = true;
-      anomalyType = 'Gradual Sensor Drift';
-      severity = 'Warning';
-      confidence = 88.5;
-      rootCause = 'Capacitive Polymer Degradation';
-      action = 'Schedule sensor recalibration within 7 days.';
-      imputedVal = parseFloat(nearby.humMean.toFixed(1));
-      imputeConfidence = 87.0;
-      this.sensorHealth.humidity = Math.max(65, this.sensorHealth.humidity - 1);
     }
 
     return this.formatResult({
@@ -191,61 +279,40 @@ class WeatherDataTrustEngine {
         {
           num: '01',
           name: 'Historical Deviation',
-          desc: '55.2°C is significantly outside the expected historical diurnal envelope (22.0°C – 27.5°C).',
+          desc: `${rawT}°C is significantly outside the expected historical diurnal envelope (22.0°C – 27.5°C).`,
           impact: 'High',
           badgeClass: 'impact-high'
         },
         {
           num: '02',
           name: 'Temporal Deviation',
-          desc: 'The temperature increased by approximately 30°C within seconds, violating thermal inertia.',
+          desc: 'The temperature increased beyond thermodynamic inertia limits within seconds.',
           impact: 'High',
           badgeClass: 'impact-high'
         },
         {
           num: '03',
           name: 'Cross-Sensor Consistency',
-          desc: 'Relative humidity and atmospheric pressure do not support the extreme heat event (Clausius-Clapeyron violation).',
+          desc: 'Barometric pressure does not support an extreme heat transient.',
           impact: 'High',
           badgeClass: 'impact-high'
         },
         {
           num: '04',
           name: 'Nearby Station Comparison',
-          desc: '4 nearby mesonet stations within 15km remain between 24.2°C and 25.8°C.',
+          desc: `Nearby mesonet stations remain within normal variance (~${nearby.tempMean}°C).`,
           impact: 'Very High',
           badgeClass: 'impact-very-high'
         }
       ];
-    } else if (mode === 'storm') {
+    } else if (mode === 'frozen') {
       return [
         {
           num: '01',
-          name: 'Spatial Correlation',
-          desc: 'Surrounding mesonet stations detect synchronized temperature drop of 6°C – 8°C.',
-          impact: 'Very High',
-          badgeClass: 'impact-trusted'
-        },
-        {
-          num: '02',
-          name: 'Barometric Precursor',
-          desc: 'Atmospheric pressure fell 4.8 hPa immediately preceding convective outflow.',
+          name: 'Zero Variance Detection',
+          desc: 'Identical transducer values recorded over consecutive acquisition windows.',
           impact: 'High',
-          badgeClass: 'impact-trusted'
-        },
-        {
-          num: '03',
-          name: 'Thermodynamic Alignment',
-          desc: 'Relative humidity surged in exact coupling with saturated cooling downdraft air.',
-          impact: 'High',
-          badgeClass: 'impact-trusted'
-        },
-        {
-          num: '04',
-          name: 'Rate of Change',
-          desc: 'Transition occurred across 10 minutes, conforming to meteorological frontal velocities.',
-          impact: 'Moderate',
-          badgeClass: 'impact-trusted'
+          badgeClass: 'impact-high'
         }
       ];
     } else {
@@ -260,7 +327,7 @@ class WeatherDataTrustEngine {
         {
           num: '02',
           name: 'Peer Consistency',
-          desc: 'Station aligns with 4 adjacent stations within ±0.6°C variance.',
+          desc: 'Station aligns with adjacent stations within expected variance.',
           impact: 'High',
           badgeClass: 'impact-trusted'
         }
