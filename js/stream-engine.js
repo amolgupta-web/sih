@@ -2,6 +2,7 @@
  * SkyGuard AI — B2B Operational Telemetry Stream Engine
  * Simulates real-time mesonet data across 24 weather stations with support for the 3
  * core product evaluation scenarios: Normal Weather, Genuine Weather Event, and Sensor Failure.
+ * Connected asynchronously to Python 3-Tier ML backend (/api/predict).
  */
 
 class OperationalStreamEngine {
@@ -19,7 +20,7 @@ class OperationalStreamEngine {
     this.timer = null;
 
     // Active scenario mode: 'normal' | 'storm' | 'failure'
-    this.activeScenario = 'failure'; // default starts with the 55.2°C incident for immediate evaluation
+    this.activeScenario = 'failure';
     this.scenarioStep = 0;
 
     // Listeners
@@ -64,14 +65,13 @@ class OperationalStreamEngine {
       this.stationBuffers[id] = buffer;
     });
 
-    // Seed the AWS-JPR-04 incident in the buffer
     const jpr = this.stationBuffers['AWS-JPR-04'];
     if (jpr && jpr.temp.length > 5) {
       const len = jpr.temp.length;
       jpr.temp[len - 4] = 25.1;
       jpr.temp[len - 3] = 25.3;
       jpr.temp[len - 2] = 25.2;
-      jpr.temp[len - 1] = 55.2; // spike
+      jpr.temp[len - 1] = 55.2;
       jpr.imputedTemp[len - 1] = 25.4;
       jpr.anomalies.push(len - 1);
     }
@@ -102,7 +102,7 @@ class OperationalStreamEngine {
     }
   }
 
-  tick() {
+  async tick() {
     const station = this.stations[this.activeStationId];
     const buffer = this.stationBuffers[this.activeStationId];
     const now = new Date();
@@ -116,13 +116,11 @@ class OperationalStreamEngine {
 
     // Scenario Handling
     if (this.activeScenario === 'failure') {
-      // SENSOR FAILURE: 25.0°C -> 25.4°C -> 55.2°C spike
       t = 55.2;
       isForcedAnomaly = true;
       station.status = 'Critical';
       station.trust = 12;
     } else if (this.activeScenario === 'storm') {
-      // GENUINE WEATHER EVENT: Multi-sensor coupled cold front (T drops 8°C, RH jumps +28%, P dips 6 hPa)
       t = station.baseTemp - 7.6;
       h = Math.min(96, station.baseHum + 26);
       p = station.basePress - 6.2;
@@ -130,7 +128,6 @@ class OperationalStreamEngine {
       station.status = 'Healthy';
       station.trust = 94;
     } else {
-      // NORMAL WEATHER
       station.status = 'Healthy';
       station.trust = 98;
     }
@@ -151,8 +148,13 @@ class OperationalStreamEngine {
       scenario: this.activeScenario
     };
 
-    // Analyze via AI Data Trust Engine
-    const analysis = window.WeatherDataTrustEngineInstance.analyzeReading(reading);
+    // Await live predictions from the Python ML Decision Tree Backend
+    let analysis;
+    if (window.WeatherDataTrustEngineInstance && typeof window.WeatherDataTrustEngineInstance.analyzeReadingAsync === 'function') {
+      analysis = await window.WeatherDataTrustEngineInstance.analyzeReadingAsync(reading);
+    } else {
+      analysis = window.WeatherDataTrustEngineInstance.analyzeReading(reading);
+    }
 
     // Buffer update
     buffer.timestamps.push(timeLabel);
