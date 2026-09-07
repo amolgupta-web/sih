@@ -148,7 +148,7 @@ class OperationalStreamEngine {
       scenario: this.activeScenario
     };
 
-    // Await live predictions from the Python ML Decision Tree Backend
+    // Await live Python backend inference
     let analysis;
     if (window.WeatherDataTrustEngineInstance && typeof window.WeatherDataTrustEngineInstance.analyzeReadingAsync === 'function') {
       analysis = await window.WeatherDataTrustEngineInstance.analyzeReadingAsync(reading);
