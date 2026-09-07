@@ -11,8 +11,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Core Professional B2B Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css">
+  <!-- Core Professional B2B Stylesheet with cache bust -->
+  <link rel="stylesheet" href="css/styles.css?v=3">
 </head>
 <body>
 
@@ -122,9 +122,9 @@
       </div>
 
       <!-- ======================================================================
-           PAGE 1: COMMAND CENTER
-           "What needs attention right now?"
-           ====================================================================== -->
+            PAGE 1: COMMAND CENTER
+            "What needs attention right now?"
+            ====================================================================== -->
       <section id="view-command-center" class="view-section active-view">
         <!-- Top Network Trust & Operational Summary -->
         <div class="network-trust-banner">
@@ -226,9 +226,9 @@
       </section>
 
       <!-- ======================================================================
-           PAGE 2: LIVE NETWORK
-           "What is happening across all weather stations?"
-           ====================================================================== -->
+            PAGE 2: LIVE NETWORK
+            "What is happening across all weather stations?"
+            ====================================================================== -->
       <section id="view-live-network" class="view-section">
         <div class="view-header-strip">
           <div class="view-heading-group">
@@ -280,9 +280,9 @@
       </section>
 
       <!-- ======================================================================
-           PAGE 3: INVESTIGATE (INCIDENT INVESTIGATION MODE)
-           "Why did the AI classify this reading as an anomaly?"
-           ====================================================================== -->
+            PAGE 3: INVESTIGATE (INCIDENT INVESTIGATION MODE)
+            "Why did the AI classify this reading as an anomaly?"
+            ====================================================================== -->
       <section id="view-investigate" class="view-section">
         <div class="view-header-strip">
           <div class="view-heading-group">
@@ -402,7 +402,7 @@
                     <span class="trust-badge badge-critical">Impact: High</span>
                   </div>
                   <p class="evidence-desc">
-                    Relative humidity (44%) and atmospheric pressure (1008 hPa) do not support an extreme heat event. Clausius-Clapeyron saturation vapor pressure would require impossible dew points (>44°C).
+                    Relative humidity (44%) and atmospheric pressure (1008 hPa) do not support an extreme heat event. Clausius-Clapeyron saturation vapor pressure would require impossible dew points (&gt;44°C).
                   </p>
                 </div>
 
@@ -424,10 +424,10 @@
                   Show Advanced Technical Details (SHAP / Loss) ▼
                 </button>
                 <div id="tech-details-box" style="display:none; margin-top:10px; padding:12px; background:var(--bg-main); border:1px solid var(--border-light); border-radius:var(--radius-xs); font-size:0.75rem; font-family:var(--font-mono)">
-                  <div>• Model Architecture: Deep Autoencoder + Isolation Forest (Ensemble)</div>
-                  <div>• Reconstruction Loss: 0.842 (Threshold: 0.120)</div>
-                  <div>• SHAP Feature Attribution Vector: [Historical: +0.42, Temporal: +0.28, Spatial: +0.21, Cross: +0.09]</div>
-                  <div>• Nearest Station Residual: ||x_station - x_neighbors|| = 30.4°C</div>
+                  <div>• Model Architecture: Decision Tree Classifier (Pruned Depth=8)</div>
+                  <div>• Decision Boundary: Rate-of-change + Psychrometric Consistency Envelopes</div>
+                  <div>• Engineered Features: [TEMP_DIFF, TEMP_VARIANCE_5, TEMP_DEW_SPREAD, DRIFT_DEV]</div>
+                  <div>• Inference Mode: Local 3-Tier Edge Engine (/api/predict)</div>
                 </div>
               </div>
             </div>
@@ -484,9 +484,9 @@
       </section>
 
       <!-- ======================================================================
-           PAGE 4: SENSOR HEALTH
-           "Which sensors are degrading?"
-           ====================================================================== -->
+            PAGE 4: SENSOR HEALTH
+            "Which sensors are degrading?"
+            ====================================================================== -->
       <section id="view-sensor-health" class="view-section">
         <div class="view-header-strip">
           <div class="view-heading-group">
@@ -607,9 +607,9 @@
       </section>
 
       <!-- ======================================================================
-           PAGE 5: MAINTENANCE
-           "What should we do next?"
-           ====================================================================== -->
+            PAGE 5: MAINTENANCE
+            "What should we do next?"
+            ====================================================================== -->
       <section id="view-maintenance" class="view-section">
         <div class="view-header-strip">
           <div class="view-heading-group">
@@ -645,9 +645,9 @@
       </section>
 
       <!-- ======================================================================
-           PAGE 6: DATA TRUST LOG
-           Traceable event history
-           ====================================================================== -->
+            PAGE 6: DATA TRUST LOG
+            Traceable event history
+            ====================================================================== -->
       <section id="view-data-trust-log" class="view-section">
         <div class="view-header-strip">
           <div class="view-heading-group">
@@ -710,17 +710,17 @@
 
   </div>
 
-  <!-- Component Scripts -->
-  <script src="js/cursor.js"></script>
-  <script src="js/ai-detector.js"></script>
-  <script src="js/stream-engine.js"></script>
-  <script src="js/charts.js"></script>
-  <script src="js/components/command-center.js"></script>
-  <script src="js/components/live-network.js"></script>
-  <script src="js/components/investigate.js"></script>
-  <script src="js/components/sensor-health.js"></script>
-  <script src="js/components/maintenance.js"></script>
-  <script src="js/components/data-trust-log.js"></script>
-  <script src="js/app.js"></script>
+  <!-- Component Scripts (Busts Browser Cache with ?v=30) -->
+  <script src="js/cursor.js?v=30"></script>
+  <script src="js/ai-detector.js?v=30"></script>
+  <script src="js/stream-engine.js?v=30"></script>
+  <script src="js/charts.js?v=30"></script>
+  <script src="js/components/command-center.js?v=30"></script>
+  <script src="js/components/live-network.js?v=30"></script>
+  <script src="js/components/investigate.js?v=30"></script>
+  <script src="js/components/sensor-health.js?v=30"></script>
+  <script src="js/components/maintenance.js?v=30"></script>
+  <script src="js/components/data-trust-log.js?v=30"></script>
+  <script src="js/app.js?v=30"></script>
 </body>
 </html>
