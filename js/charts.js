@@ -80,11 +80,11 @@ class UnifiedComparativeChart {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, width, height);
 
-    const pad = { top: 25, right: 35, bottom: 30, left: 52 };
+    const pad = { top: 25, right: 35, bottom: 30, left: 55 };
     const plotW = width - pad.left - pad.right;
     const plotH = height - pad.top - pad.bottom;
 
-    // Determine primary active scale based on checked layers
+    // Determine active scale based on checked layers
     let activeScale = { min: 15, max: 60, unit: '°C', label: 'Temperature' };
     if (this.visibleLayers.hum && !this.visibleLayers.temp && !this.visibleLayers.press) {
       activeScale = { min: 0, max: 100, unit: '%', label: 'Humidity' };
@@ -109,7 +109,7 @@ class UnifiedComparativeChart {
 
     const getX = (idx, total) => pad.left + (idx / Math.max(1, total - 1)) * plotW;
 
-    // 1. Grid Lines & Dynamic Y-Axis Labels
+    // 1. Grid Lines & Dynamic Y-Axis Labels matching active scale
     ctx.strokeStyle = 'rgba(226, 232, 240, 0.8)';
     ctx.lineWidth = 1;
     ctx.fillStyle = '#94A3B8';
@@ -127,7 +127,6 @@ class UnifiedComparativeChart {
       ctx.stroke();
 
       let labelText = `${val.toFixed(0)}${activeScale.unit}`;
-      if (activeScale.unit === ' hPa') labelText = `${val.toFixed(0)}`;
       ctx.fillText(labelText, pad.left - 6, y + 3.5);
     }
 
@@ -137,7 +136,7 @@ class UnifiedComparativeChart {
     ctx.textAlign = 'left';
     ctx.fillText(`Scale: ${activeScale.label} (${activeScale.unit})`, pad.left, pad.top - 10);
 
-    // 2. Normal Daily Range (Safe Zone Envelope - only relevant when Temperature is active)
+    // 2. Normal Daily Range Envelope (Temperature specific)
     if (this.visibleLayers.envelope && (this.visibleLayers.temp || (!this.visibleLayers.hum && !this.visibleLayers.press))) {
       const envTopY = getY(28.5, tempScale);
       const envBotY = getY(22.0, tempScale);
