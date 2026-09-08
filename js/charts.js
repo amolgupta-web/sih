@@ -1,7 +1,8 @@
 /**
  * SkyGuard AI — Unified Comparative Chart Canvas Engine
  * Pure HTML5 Canvas 2D engine supporting interactive factor toggles,
- * dynamic multi-parameter y-axis scaling, and real-time mouse hover tooltips.
+ * dynamic multi-parameter y-axis scaling, real-time mouse hover tooltips,
+ * and live rolling time-axis indicators.
  */
 
 class UnifiedComparativeChart {
@@ -60,7 +61,6 @@ class UnifiedComparativeChart {
       const width = parseFloat(this.canvas.style.width) || 600;
       const plotW = width - pad.left - pad.right;
 
-      // Find nearest data point index based on mouse X position
       const relX = mouseX - pad.left;
       const index = Math.round((relX / plotW) * (buffer.length - 1));
 
@@ -271,7 +271,6 @@ class UnifiedComparativeChart {
       const pt = buffer[this.hoverIndex];
       const hX = getX(this.hoverIndex, buffer.length);
 
-      // Vertical crosshair line
       ctx.strokeStyle = 'rgba(23, 32, 30, 0.3)';
       ctx.lineWidth = 1;
       ctx.setLineDash([3, 3]);
@@ -281,7 +280,6 @@ class UnifiedComparativeChart {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Tooltip Box Dimensions
       const boxW = 150;
       const boxH = 68;
       let boxX = hX + 12;
@@ -291,7 +289,6 @@ class UnifiedComparativeChart {
         boxX = hX - boxW - 12;
       }
 
-      // Draw Tooltip Card Background
       ctx.fillStyle = 'rgba(23, 32, 30, 0.9)';
       ctx.strokeStyle = 'rgba(46, 155, 115, 0.6)';
       ctx.lineWidth = 1;
@@ -300,7 +297,6 @@ class UnifiedComparativeChart {
       ctx.fill();
       ctx.stroke();
 
-      // Tooltip Text
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 10px Inter, sans-serif';
       ctx.textAlign = 'left';
@@ -313,14 +309,17 @@ class UnifiedComparativeChart {
       ctx.fillText(`Pressure: ${pt.pressure} hPa`, boxX + 10, boxY + 60);
     }
 
-    // Timestamps at bottom
+    // 8. Timestamps & Live Rolling Ticker Indicator at bottom
     if (buffer.length > 1) {
-      ctx.fillStyle = '#94A3B8';
+      ctx.fillStyle = '#64748B';
       ctx.font = '9.5px "JetBrains Mono", monospace';
+      
       ctx.textAlign = 'left';
-      ctx.fillText(buffer[0].timeStr || '', pad.left, height - 8);
+      ctx.fillText(`Start: ${buffer[0].timeStr || ''}`, pad.left, height - 8);
+      
       ctx.textAlign = 'right';
-      ctx.fillText(buffer[buffer.length - 1].timeStr || '', pad.left + plotW, height - 8);
+      const liveText = `● LIVE  ${buffer[buffer.length - 1].timeStr || ''}`;
+      ctx.fillText(liveText, pad.left + plotW, height - 8);
     }
   }
 }
