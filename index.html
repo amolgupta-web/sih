@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Core Professional B2B Stylesheet -->
+  <!-- Core Stylesheet -->
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -82,31 +82,32 @@
           <div class="trust-metric-col">
             <div class="trust-metric-header">
               <span class="trust-metric-label">Network Data Trust Score</span>
-              <div id="cmd-trust-score" class="trust-score-val">94.8 <span>/ 100</span></div>
+              <div id="cmd-trust-score" class="trust-score-val">86 <span>/ 100</span></div>
             </div>
             <div class="trust-progress-track">
-              <div id="cmd-trust-bar" class="trust-progress-fill" style="width: 94.8%"></div>
+              <div id="cmd-trust-bar" class="trust-progress-fill" style="width: 86%"></div>
             </div>
             <p class="trust-metric-note">
-              Based on live sensor reliability, anomaly activity, data continuity, and network consistency across 24 mesonet nodes.
+              Based on live sensor reliability, anomaly activity, data continuity, and spatial consensus across 3 regional triad nodes.
             </p>
           </div>
 
+          <!-- Network Triad Summary -->
           <div class="network-summary-grid">
             <div class="summary-stat-box">
-              <span class="summary-stat-num">24</span>
+              <span class="summary-stat-num" id="stat-active-stations">03</span>
               <span class="summary-stat-label">Active Stations</span>
             </div>
             <div class="summary-stat-box">
-              <span class="summary-stat-num">72</span>
+              <span class="summary-stat-num" id="stat-monitored-sensors">09</span>
               <span class="summary-stat-label">Monitored Sensors</span>
             </div>
             <div class="summary-stat-box">
-              <span class="summary-stat-num" style="color:var(--status-critical)">03</span>
+              <span class="summary-stat-num" id="stat-attention-required" style="color:var(--status-critical)">02</span>
               <span class="summary-stat-label">Require Attention</span>
             </div>
             <div class="summary-stat-box">
-              <span class="summary-stat-num" style="color:var(--status-trusted)">98.2%</span>
+              <span class="summary-stat-num" id="stat-trusted-pct" style="color:var(--status-trusted)">77.8%</span>
               <span class="summary-stat-label">Trusted Data</span>
             </div>
           </div>
@@ -128,9 +129,14 @@
                   <span class="channel-dot press"></span>
                   <span>Pressure (hPa)</span>
                 </div>
-                <div class="channel-tag" style="margin-left:8px">
+                <div class="channel-tag" style="margin-left:4px">
                   <span style="display:inline-block; width:12px; height:2px; background:#2E9B73; border-top:2px dashed #2E9B73"></span>
-                  <span style="color:#2E9B73">AI Imputed Value</span>
+                  <span style="color:#2E9B73">AI Baseline (Expected)</span>
+                </div>
+                <!-- Plain-Language Normal Range Badge -->
+                <div class="channel-tag normal-range-tag" title="The safe green zone shows the temperature you would normally expect at this time of day based on past weather history.">
+                  <span class="channel-band-swatch"></span>
+                  <span style="font-weight:600; color:var(--brand-teal);">Normal Daily Range (Safe Zone)</span>
                 </div>
               </div>
 
@@ -177,15 +183,18 @@
             <div class="chart-footer-meta">
               <span>Focal Station: <strong id="cmd-active-station-name">AWS-JPR-04 (Jaipur Semi-Arid Grid)</strong></span>
               <span style="color:var(--status-critical); font-weight:600" id="cmd-chart-alert-tag">• 1 Anomaly Flagged at 14:32:15</span>
-              <span>Green Shaded Band: Expected Diurnal Envelope</span>
+              <span style="color:var(--text-secondary);">
+                <strong style="color:var(--brand-teal);">Green Shaded Band:</strong> Normal Daily Range (Safe Historical Window)
+              </span>
             </div>
           </div>
 
+          <!-- Attention Queue -->
           <div class="queue-panel-card">
             <div class="queue-header">
               <div class="queue-title">
                 <span>Attention Queue</span>
-                <span class="tab-badge">3</span>
+                <span class="tab-badge">2</span>
               </div>
               <span style="font-size:0.72rem; color:var(--text-secondary)">Prioritized by Risk</span>
             </div>
@@ -200,11 +209,11 @@
       <section id="view-live-network" class="view-section">
         <div class="view-header-strip">
           <div class="view-heading-group">
-            <h2 class="view-title">Mesonet Station Directory & Live Telemetry</h2>
+            <h2 class="view-title">Mesonet Station Directory &amp; Live Telemetry</h2>
             <p class="view-subtitle">Real-time data trust, current sensor measurements, and spatial network connectivity.</p>
           </div>
           <div style="font-size:0.78rem; color:var(--text-secondary)">
-            Showing <strong>3 of 24</strong> Primary Grid Stations
+            Showing <strong>3 of 3</strong> Primary Grid Stations
           </div>
         </div>
 
@@ -228,7 +237,7 @@
 
           <div class="network-map-card">
             <div style="display:flex; align-items:center; justify-content:space-between">
-              <h3 style="font-size:0.92rem; font-weight:700">Mesonet Topology & Spatial Context</h3>
+              <h3 style="font-size:0.92rem; font-weight:700">Mesonet Topology &amp; Spatial Context</h3>
               <span style="font-size:0.72rem; color:var(--text-secondary)">Click node to inspect</span>
             </div>
             <div class="map-stage-wrap">
@@ -322,7 +331,7 @@
           <div class="investigate-chart-card" style="background:#ffffff; border:1px solid var(--border-light); border-radius:8px; padding:16px; box-shadow:var(--shadow-sm);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
               <div>
-                <h4 style="font-size:0.95rem; font-weight:700; color:var(--text-primary);" id="inv-chart-title">Incident Forensic Waveform & Baseline Envelope</h4>
+                <h4 style="font-size:0.95rem; font-weight:700; color:var(--text-primary);" id="inv-chart-title">Incident Forensic Waveform &amp; Baseline Envelope</h4>
                 <p style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">Comparing raw telemetry stream against AI imputed recovery trajectory.</p>
               </div>
               <div style="display:flex; gap:12px; font-size:0.74rem;">
@@ -426,7 +435,7 @@
         </div>
 
         <!-- City Switcher Tabs for Sensor Health -->
-        <div class="sensor-health-city-tabs" style="display:flex; gap:10px; margin-bottom:18px; padding-bottom:12px; border-bottom:1px solid var(--border-light);">
+        <div class="sensor-health-city-tabs">
           <button class="city-tab-btn active" data-health-station="AWS-JPR-04">
             <span>Jaipur</span>
             <span class="tab-chip critical">Critical</span>
@@ -442,10 +451,8 @@
         </div>
 
         <div class="sensor-health-layout">
-          <!-- 3 Sensor Health Cards Grid -->
           <div class="sensor-health-overview-grid" id="health-cards-grid"></div>
 
-          <!-- 90-Day Degradation Timeline Card -->
           <div class="lifecycle-timeline-card">
             <div>
               <h3 style="font-size:1.05rem; font-weight:700" id="health-timeline-title">Temperature Sensor 90-Day Degradation Timeline (AWS-JPR-04)</h3>
@@ -465,7 +472,7 @@
       <section id="view-maintenance" class="view-section">
         <div class="view-header-strip">
           <div class="view-heading-group">
-            <h2 class="view-title">Field Engineering & Maintenance Queue</h2>
+            <h2 class="view-title">Field Engineering &amp; Maintenance Queue</h2>
             <p class="view-subtitle">Prioritized operational work orders based on AI anomaly severity and component degradation.</p>
           </div>
           <div style="font-size:0.78rem; color:var(--text-secondary)">
@@ -499,7 +506,7 @@
       <section id="view-data-trust-log" class="view-section">
         <div class="view-header-strip">
           <div class="view-heading-group">
-            <h2 class="view-title">Data Trust Audit & Traceability Log</h2>
+            <h2 class="view-title">Data Trust Audit &amp; Traceability Log</h2>
             <p class="view-subtitle">Immutable log recording every sensor measurement, trust score, and AI classification decision.</p>
           </div>
           <button id="btn-export-log-csv" class="btn-control btn-brand">
