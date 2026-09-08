@@ -4,163 +4,166 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SkyGuard AI — Weather Data Trust Intelligence Platform</title>
-  
-  <!-- Verify these paths match your folder structure -->
+
+  <!-- Stylesheet references with fallback checks -->
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/variables.css" />
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/views.css" />
-  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
-  <!-- Top Header -->
-  <header class="app-header">
-    <div class="header-left">
-      <div class="brand-badge">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <!-- Top Global Header -->
+  <header class="app-header header" style="display:flex; justify-content:space-between; align-items:center; padding:12px 24px; border-bottom:1px solid #E2E8F0; background:#ffffff;">
+    <div class="header-left" style="display:flex; align-items:center; gap:12px;">
+      <div class="brand-badge logo-icon" style="color:#2E9B73; display:flex; align-items:center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
         </svg>
       </div>
-      <div class="brand-titles">
-        <span class="brand-name">Weather Data Trust Intelligence</span>
-        <span class="brand-tag">• PS 73</span>
+      <div class="brand-titles" style="font-size:14px; font-weight:600; color:#17201E;">
+        <span>Weather Data Trust Intelligence</span>
+        <span style="color:#718096; margin-left:6px; font-weight:400;">• PS 73</span>
       </div>
     </div>
 
-    <!-- Top status items removed as requested -->
+    <!-- Top status indicators (Mesonet, Overall Trust, Flagged) intentionally removed -->
 
     <div class="header-right">
-      <button id="cursor-toggle-btn" class="util-btn">Custom Cursor: Off</button>
+      <button id="cursor-toggle-btn" class="header-util-btn util-btn btn-cursor-toggle" style="background:#F8FAFC; border:1px solid #E2E8F0; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; color:#475569;">
+        Custom Cursor: Off
+      </button>
     </div>
   </header>
 
-  <!-- Navigation Tabs -->
-  <nav class="sub-nav">
+  <!-- Navigation Bar -->
+  <nav class="primary-nav sub-nav nav-tabs" style="display:flex; gap:8px; padding:8px 24px; border-bottom:1px solid #E2E8F0; background:#F8FAFC;">
     <button class="nav-tab active" data-view="command-center">Command Center</button>
     <button class="nav-tab" data-view="live-network">Live Network</button>
-    <button class="nav-tab" data-view="investigate">Investigate <span class="badge-critical">01 Critical</span></button>
+    <button class="nav-tab" data-view="investigate">Investigate <span class="badge-critical" style="background:#FED7D7; color:#C94F4F; padding:2px 6px; border-radius:10px; font-size:11px; font-weight:700; margin-left:4px;">01 Critical</span></button>
     <button class="nav-tab" data-view="sensor-health">Sensor Health</button>
-    <button class="nav-tab" data-view="maintenance">Maintenance <span class="badge-subtle">3</span></button>
+    <button class="nav-tab" data-view="maintenance">Maintenance <span class="badge-subtle" style="background:#EDF2F7; color:#4A5568; padding:2px 6px; border-radius:10px; font-size:11px; margin-left:4px;">3</span></button>
     <button class="nav-tab" data-view="data-trust-log">Data Trust Log</button>
   </nav>
 
-  <!-- Main View Area -->
-  <main class="main-content">
+  <!-- Main View Container -->
+  <main class="app-main-container main-content" style="padding:20px 24px; max-width:1440px; margin:0 auto;">
 
-    <!-- View: Command Center -->
-    <section id="view-command-center" class="view-panel active">
+    <!-- VIEW 1: COMMAND CENTER -->
+    <section id="view-command-center" class="app-view view-panel active">
 
-      <!-- Evaluator Sandbox Bar -->
-      <div class="evaluator-sandbox">
-        <div class="sandbox-text">
-          <span class="dot-live"></span>
+      <!-- Evaluator Sandbox Controls -->
+      <div class="sandbox-action-bar evaluator-sandbox" style="display:flex; justify-content:space-between; align-items:center; background:#ffffff; border:1px solid #E2E8F0; border-radius:8px; padding:12px 18px; margin-bottom:18px;">
+        <div class="sandbox-label sandbox-text" style="font-size:13px; color:#17201E;">
+          <span style="display:inline-block; width:8px; height:8px; background:#2E9B73; border-radius:50%; margin-right:8px;"></span>
           <strong>EVALUATOR SANDBOX:</strong> Verify how SkyGuard AI distinguishes genuine weather from hardware failure:
         </div>
-        <div class="sandbox-actions">
-          <button class="scenario-btn" data-scenario="normal">✓ Normal Weather</button>
-          <button class="scenario-btn" data-scenario="storm">☔ Genuine Weather Event (Front)</button>
-          <button class="scenario-btn active" data-scenario="failure">⚡ Sensor Failure (55.2°C Spike)</button>
+        <div class="sandbox-buttons sandbox-actions" style="display:flex; gap:8px;">
+          <button class="btn-scenario scenario-btn" data-scenario="normal" style="padding:7px 14px; font-size:12px; font-weight:600; border-radius:6px; border:1px solid #CBD5E0; background:#fff; cursor:pointer;">✓ Normal Weather</button>
+          <button class="btn-scenario scenario-btn" data-scenario="storm" style="padding:7px 14px; font-size:12px; font-weight:600; border-radius:6px; border:1px solid #CBD5E0; background:#fff; cursor:pointer;">☔ Genuine Weather Event (Front)</button>
+          <button class="btn-scenario scenario-btn active" data-scenario="failure" style="padding:7px 14px; font-size:12px; font-weight:600; border-radius:6px; border:none; background:#1C6758; color:#fff; cursor:pointer;">⚡ Sensor Failure (55.2°C Spike)</button>
         </div>
       </div>
 
-      <!-- Trust Score & Summary Metrics -->
-      <div class="metrics-row">
-        <div class="metric-card trust-card">
-          <div class="trust-header">
-            <span class="metric-label">NETWORK DATA TRUST SCORE</span>
-            <div id="cmd-trust-score" class="trust-score-display">69 <span>/ 100</span></div>
+      <!-- Trust Metrics & KPI Row -->
+      <div class="command-kpi-row metrics-row" style="display:grid; grid-template-columns: 2.2fr 1fr 1fr 1fr 1fr; gap:16px; margin-bottom:20px;">
+        <div class="kpi-card-trust metric-card trust-card" style="background:#fff; border:1px solid #E2E8F0; border-radius:8px; padding:18px;">
+          <div class="trust-metric-header trust-header" style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;">
+            <span class="trust-metric-label metric-label" style="font-size:11px; font-weight:700; letter-spacing:0.6px; color:#718096;">NETWORK DATA TRUST SCORE</span>
+            <div id="cmd-trust-score" class="trust-score-val trust-score-display" style="font-size:26px; font-weight:800; color:#1C6758;">
+              69 <span style="font-size:13px; font-weight:600; color:#94A3B8;">/ 100</span>
+            </div>
           </div>
-          <div class="progress-bar-container">
-            <div id="cmd-trust-progress-bar" class="progress-bar-fill" style="width: 69%;"></div>
+          <div class="trust-progress-track progress-bar-container" style="background:#E2E8F0; height:7px; border-radius:4px; overflow:hidden; margin-bottom:10px;">
+            <div id="cmd-trust-progress-bar" class="trust-progress-fill progress-bar-fill" style="height:100%; width:69%; background:#2E9B73; transition:width 0.4s ease;"></div>
           </div>
-          <p class="trust-caption">
+          <div class="trust-meta-caption trust-caption" style="font-size:11.5px; color:#718096; line-height:1.4;">
             Based on live sensor reliability, anomaly activity, data continuity, and network consistency across 24 mesonet nodes.
-          </p>
+          </div>
         </div>
 
-        <div class="metric-card stat-card">
-          <span class="stat-number" id="stat-active-stations">24</span>
-          <span class="stat-label">Active Stations</span>
+        <div class="kpi-stat-card metric-card stat-card" style="background:#fff; border:1px solid #E2E8F0; border-radius:8px; padding:18px; display:flex; flex-direction:column; justify-content:center;">
+          <span class="kpi-stat-val stat-number" id="stat-active-stations" style="font-size:26px; font-weight:800; color:#17201E;">24</span>
+          <span class="kpi-stat-label stat-label" style="font-size:12px; color:#718096; margin-top:4px;">Active Stations</span>
         </div>
 
-        <div class="metric-card stat-card">
-          <span class="stat-number" id="stat-monitored-sensors">72</span>
-          <span class="stat-label">Monitored Sensors</span>
+        <div class="kpi-stat-card metric-card stat-card" style="background:#fff; border:1px solid #E2E8F0; border-radius:8px; padding:18px; display:flex; flex-direction:column; justify-content:center;">
+          <span class="kpi-stat-val stat-number" id="stat-monitored-sensors" style="font-size:26px; font-weight:800; color:#17201E;">72</span>
+          <span class="kpi-stat-label stat-label" style="font-size:12px; color:#718096; margin-top:4px;">Monitored Sensors</span>
         </div>
 
-        <div class="metric-card stat-card stat-attention">
-          <span class="stat-number" id="stat-require-attention">03</span>
-          <span class="stat-label">Require Attention</span>
+        <div class="kpi-stat-card critical metric-card stat-card stat-attention" style="background:#fff; border:1px solid #E2E8F0; border-radius:8px; padding:18px; display:flex; flex-direction:column; justify-content:center;">
+          <span class="kpi-stat-val stat-number" id="stat-require-attention" style="font-size:26px; font-weight:800; color:#C94F4F;">03</span>
+          <span class="kpi-stat-label stat-label" style="font-size:12px; color:#718096; margin-top:4px;">Require Attention</span>
         </div>
 
-        <div class="metric-card stat-card">
-          <span class="stat-number" id="stat-trusted-data">98.2%</span>
-          <span class="stat-label">Trusted Data</span>
+        <div class="kpi-stat-card metric-card stat-card" style="background:#fff; border:1px solid #E2E8F0; border-radius:8px; padding:18px; display:flex; flex-direction:column; justify-content:center;">
+          <span class="kpi-stat-val stat-number" id="stat-trusted-data" style="font-size:26px; font-weight:800; color:#1C6758;">98.2%</span>
+          <span class="kpi-stat-label stat-label" style="font-size:12px; color:#718096; margin-top:4px;">Trusted Data</span>
         </div>
       </div>
 
       <!-- Main Dual Grid: Chart (Left) & Attention Queue (Right) -->
-      <div class="command-workspace-grid">
-
-        <!-- Left Chart Card -->
-        <div class="chart-panel-card">
-          <div class="chart-panel-header">
-            <div class="chart-legend">
-              <span class="legend-tag"><span class="legend-dot dot-temp"></span> Temperature (°C)</span>
-              <span class="legend-tag"><span class="legend-dot dot-hum"></span> Humidity (%)</span>
-              <span class="legend-tag"><span class="legend-dot dot-press"></span> Pressure (hPa)</span>
-              <span class="legend-tag"><span class="legend-dash dot-imputed"></span> AI Imputed Value</span>
+      <div class="command-workspace-grid" style="display:grid; grid-template-columns: 2fr 1fr; gap:16px;">
+        
+        <!-- Left Panel: Chart -->
+        <div class="chart-panel-card" style="background:#fff; border:1px solid #E2E8F0; border-radius:8px; padding:16px; display:flex; flex-direction:column;">
+          <div class="chart-panel-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div class="chart-legend" style="display:flex; gap:16px; font-size:12px; color:#475569;">
+              <span class="legend-item" style="display:flex; align-items:center; gap:6px;"><span style="width:10px; height:10px; background:#D9534F; border-radius:2px;"></span> Temperature (°C)</span>
+              <span class="legend-item" style="display:flex; align-items:center; gap:6px;"><span style="width:10px; height:10px; background:#3B82F6; border-radius:2px;"></span> Humidity (%)</span>
+              <span class="legend-item" style="display:flex; align-items:center; gap:6px;"><span style="width:10px; height:10px; background:#C98A1C; border-radius:2px;"></span> Pressure (hPa)</span>
+              <span class="legend-item" style="display:flex; align-items:center; gap:6px;"><span style="width:14px; height:2px; background:#2E9B73; display:inline-block;"></span> — AI Imputed Value</span>
             </div>
-            <div class="chart-controls">
-              <!-- Changed 1 Hour -> 3 Hour -->
-              <button class="timeframe-btn active" data-range="3h">3 Hour</button>
-              <button class="timeframe-btn" data-range="6h">6 Hours</button>
-              <button class="timeframe-btn" data-range="24h">24 Hours</button>
-              <button class="timeframe-btn" data-range="7d">7 Days</button>
+            <div class="chart-timeframe-controls chart-controls" style="display:flex; gap:4px; background:#F1F5F9; padding:2px; border-radius:6px;">
+              <button class="time-btn timeframe-btn active" data-range="3h" style="border:none; background:#fff; padding:4px 10px; font-size:11px; font-weight:600; border-radius:4px; cursor:pointer; color:#1E293B;">3 Hour</button>
+              <button class="time-btn timeframe-btn" data-range="6h" style="border:none; background:transparent; padding:4px 10px; font-size:11px; font-weight:600; border-radius:4px; cursor:pointer; color:#64748B;">6 Hours</button>
+              <button class="time-btn timeframe-btn" data-range="24h" style="border:none; background:transparent; padding:4px 10px; font-size:11px; font-weight:600; border-radius:4px; cursor:pointer; color:#64748B;">24 Hours</button>
+              <button class="time-btn timeframe-btn" data-range="7d" style="border:none; background:transparent; padding:4px 10px; font-size:11px; font-weight:600; border-radius:4px; cursor:pointer; color:#64748B;">7 Days</button>
             </div>
           </div>
 
-          <div class="chart-container" style="position: relative; width: 100%; height: 320px;">
+          <div class="chart-canvas-wrapper chart-container" style="position:relative; width:100%; height:320px; flex-grow:1;">
             <canvas id="unified-comparative-canvas"></canvas>
           </div>
 
-          <div class="chart-panel-footer">
-            <span class="footer-focal">Focal Station: <strong id="cmd-active-station-name">AWS-JPR-04 (Jaipur Semi-Arid Grid)</strong></span>
-            <span class="footer-alert" id="cmd-chart-alert-tag">• 1 Anomaly Flagged at 14:32:15</span>
-            <span class="footer-note">Green Shaded Band: Expected Diurnal Envelope</span>
+          <div class="chart-panel-footer" style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#64748B; border-top:1px solid #F1F5F9; padding-top:12px; margin-top:8px;">
+            <span class="focal-station-text">Focal Station: <strong id="cmd-active-station-name" style="color:#1E293B;">AWS-JPR-04 (Jaipur Semi-Arid Grid)</strong></span>
+            <span class="focal-alert-text" id="cmd-chart-alert-tag" style="color:#C94F4F; font-weight:600;">• 1 Anomaly Flagged at 14:32:15</span>
+            <span class="focal-envelope-note" style="color:#94A3B8;">Green Shaded Band: Expected Diurnal Envelope</span>
           </div>
         </div>
 
-        <!-- Right Attention Queue Card -->
-        <div class="queue-panel-card">
-          <div class="queue-header" style="display:flex; justify-content:space-between; align-items:center;">
-            <!-- Changed "AI Attention Queue" -> "Attention Queue" -->
-            <div class="queue-title-group">
-              <h3 style="margin:0; font-size:15px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+        <!-- Right Panel: Attention Queue -->
+        <div class="queue-panel-card" style="background:#fff; border:1px solid #E2E8F0; border-radius:8px; padding:16px;">
+          <div class="queue-panel-header queue-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <div class="queue-title-wrap queue-title-group">
+              <h3 style="margin:0; font-size:14px; font-weight:700; color:#17201E; display:flex; align-items:center;">
                 Attention Queue
-                <span class="queue-counter" style="background:#FED7D7; color:#C94F4F; font-size:11px; padding:2px 7px; border-radius:10px; font-weight:700;">3</span>
+                <span class="badge queue-counter" style="background:#FED7D7; color:#C94F4F; padding:2px 7px; border-radius:12px; font-size:11px; margin-left:6px;">3</span>
               </h3>
             </div>
-            <span class="queue-subtext" style="font-size:12px; color:#718096;">Prioritized by Risk</span>
+            <span class="queue-sort-caption queue-subtext" style="font-size:12px; color:#718096;">Prioritized by Risk</span>
           </div>
 
+          <!-- Target container for command-center.js cards -->
           <div id="cmd-triage-list" class="queue-items-container"></div>
         </div>
 
       </div>
-
     </section>
 
-    <!-- Other tab views -->
-    <section id="view-live-network" class="view-panel"></section>
-    <section id="view-investigate" class="view-panel"></section>
-    <section id="view-sensor-health" class="view-panel"></section>
-    <section id="view-maintenance" class="view-panel"></section>
-    <section id="view-data-trust-log" class="view-panel"></section>
+    <!-- Other View Stubs -->
+    <section id="view-live-network" class="app-view view-panel" style="display:none;"></section>
+    <section id="view-investigate" class="app-view view-panel" style="display:none;"></section>
+    <section id="view-sensor-health" class="app-view view-panel" style="display:none;"></section>
+    <section id="view-maintenance" class="app-view view-panel" style="display:none;"></section>
+    <section id="view-data-trust-log" class="app-view view-panel" style="display:none;"></section>
   </main>
 
-  <!-- Core Scripts -->
+  <!-- Core Scripts in Startup Sequence -->
   <script src="js/charts.js"></script>
   <script src="js/stream-engine.js"></script>
   <script src="js/components/command-center.js"></script>
