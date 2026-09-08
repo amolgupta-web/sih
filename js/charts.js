@@ -21,7 +21,6 @@ class UnifiedComparativeChart {
     this.initToggles();
     this.bindWindowResize();
     
-    // Initial delay to ensure DOM layout is complete
     setTimeout(() => this.resizeCanvas(), 50);
   }
 
@@ -194,7 +193,6 @@ class UnifiedComparativeChart {
       });
       ctx.stroke();
 
-      // Points and Anomaly Pins
       buffer.forEach((pt, idx) => {
         const x = getX(idx, buffer.length);
         const y = getY(pt.temperature, tempScale);
@@ -228,7 +226,6 @@ class UnifiedComparativeChart {
   }
 }
 
-// Global Singleton Setup
 window.UnifiedComparativeChartInstance = null;
 
 window.initUnifiedChart = function () {
