@@ -17,38 +17,38 @@ class SensorHealthController {
         metrics: [
           {
             sensor: 'Temperature (PT100 RTD)',
-            score: 82,
-            status: 'Degradation Detected',
+            score: 24,
+            status: 'Critical Transducer Failure',
             badge: 'badge-critical',
             color: 'var(--status-critical, #C94F4F)',
             rows: [
-              { label: 'Drift Velocity', value: '+0.4°C / mo' },
-              { label: 'Noise Floor', value: 'Elevated (2.4σ)' },
-              { label: 'Data Continuity', value: '99.4%' },
-              { label: 'Spike Frequency', value: '4 in 7 days' }
+              { label: 'Drift Velocity', value: '+30.0°C (Runaway)' },
+              { label: 'Noise Floor', value: 'Unstable (9.8σ)' },
+              { label: 'Data Continuity', value: 'Quarantined for Audit' },
+              { label: 'Field Status', value: 'P1 Replacement Dispatched' }
             ]
           },
           {
             sensor: 'Humidity (Capacitive Polymer)',
-            score: 74,
-            status: 'Calibration Drift',
-            badge: 'badge-attention',
-            color: 'var(--status-attention, #C98A1C)',
-            rows: [
-              { label: 'Drift Velocity', value: '+1.8% / mo' },
-              { label: 'Noise Floor', value: 'Nominal' },
-              { label: 'Data Continuity', value: '98.8%' },
-              { label: 'Calibration Window', value: 'Within 7 days' }
-            ]
-          },
-          {
-            sensor: 'Pressure (Piezoresistive Baro)',
             score: 91,
             status: 'Nominal State',
             badge: 'badge-trusted',
             color: 'var(--status-trusted, #2E9B73)',
             rows: [
-              { label: 'Drift Velocity', value: '0.02 hPa / mo' },
+              { label: 'Drift Velocity', value: '+0.1% / mo' },
+              { label: 'Noise Floor', value: 'Nominal (0.4σ)' },
+              { label: 'Data Continuity', value: '99.8%' },
+              { label: 'Calibration Window', value: 'Q4 Scheduled' }
+            ]
+          },
+          {
+            sensor: 'Pressure (Piezoresistive Baro)',
+            score: 95,
+            status: 'Nominal State',
+            badge: 'badge-trusted',
+            color: 'var(--status-trusted, #2E9B73)',
+            rows: [
+              { label: 'Drift Velocity', value: '0.01 hPa / mo' },
               { label: 'Noise Floor', value: 'Low (0.3σ)' },
               { label: 'Data Continuity', value: '99.9%' },
               { label: 'Hysteresis', value: 'None Detected' }
@@ -91,9 +91,9 @@ class SensorHealthController {
           {
             day: 'AI Forecast',
             title: 'Failure Window',
-            desc: 'Total telemetry loss forecasted within 7 days without field service.',
-            color: 'var(--brand-teal, #2E9B73)',
-            border: 'var(--brand-teal, #2E9B73)',
+            desc: 'Immediate sensor replacement required. Transducer telemetry quarantined.',
+            color: 'var(--status-critical, #C94F4F)',
+            border: 'var(--status-critical, #C94F4F)',
             bg: 'var(--bg-app)'
           }
         ]
@@ -111,23 +111,23 @@ class SensorHealthController {
             badge: 'badge-attention',
             color: 'var(--status-attention, #C98A1C)',
             rows: [
-              { label: 'Bus Output', value: '10.8 V (Low)' },
-              { label: 'Soot Density', value: 'High (Urban Dust)' },
+              { label: 'Bus Output', value: '10.8 V (Low Threshold)' },
+              { label: 'Soot Density', value: 'High (Urban Dust Layer)' },
               { label: 'Charge Efficiency', value: '-14% / wk' },
-              { label: 'Swap Priority', value: 'P2 - Within 24h' }
+              { label: 'Field Status', value: 'P2 - Battery Swap Scheduled' }
             ]
           },
           {
             sensor: 'Humidity (Capacitive Polymer)',
             score: 72,
-            status: 'Urban Aerosol Offset',
+            status: 'Calibration Drift (Voltage Induced)',
             badge: 'badge-attention',
             color: 'var(--status-attention, #C98A1C)',
             rows: [
-              { label: 'Offset Error', value: '+18% Relative' },
+              { label: 'Offset Error', value: '+18% Relative Drift' },
               { label: 'Noise Floor', value: 'Mild Drift (1.2σ)' },
               { label: 'Data Continuity', value: '98.2%' },
-              { label: 'Calibration Window', value: 'Immediate' }
+              { label: 'Calibration Window', value: 'Within 24 Hours' }
             ]
           },
           {
@@ -156,7 +156,7 @@ class SensorHealthController {
           {
             day: '21 Days Ago',
             title: 'Particulate Dust Layer',
-            desc: 'Airborne PM10 particulate deposition reduced charging rate by 8%.',
+            desc: 'Airborne PM10 particulate deposition reduced solar charging rate by 8%.',
             color: 'var(--status-attention, #C98A1C)',
             border: 'var(--border-light)',
             bg: 'var(--bg-app)'
@@ -164,7 +164,7 @@ class SensorHealthController {
           {
             day: '5 Days Ago',
             title: 'Voltage Droop Observed',
-            desc: 'Auxiliary rail output dropped below 11.8V during peak data bursts.',
+            desc: 'Auxiliary rail output dropped below 11.8V during peak telemetry bursts.',
             color: 'var(--status-attention, #C98A1C)',
             border: 'var(--border-light)',
             bg: 'var(--bg-app)'
@@ -180,7 +180,7 @@ class SensorHealthController {
           {
             day: 'AI Forecast',
             title: 'Cell Swap Window',
-            desc: 'Field crew battery replacement scheduled within 24 operational hours.',
+            desc: 'Field crew solar glass clean & battery replacement required within 24h.',
             color: 'var(--brand-teal, #2E9B73)',
             border: 'var(--brand-teal, #2E9B73)',
             bg: 'var(--bg-app)'
@@ -300,7 +300,7 @@ class SensorHealthController {
     if (!this.cityData[stationId]) return;
     this.activeStation = stationId;
 
-    // Update Tab Selection Styling
+    // Synchronize tab pill state
     document.querySelectorAll('[data-health-station]').forEach((btn) => {
       if (btn.dataset.healthStation === stationId) {
         btn.classList.add('active');
@@ -316,7 +316,7 @@ class SensorHealthController {
     const data = this.cityData[stationId];
     if (!data) return;
 
-    // Subtitle & Header Updates
+    // Update Header Text Elements
     const sub = document.getElementById('sensor-health-subtitle');
     if (sub) sub.textContent = data.subtitle;
 
@@ -339,7 +339,7 @@ class SensorHealthController {
           </div>
           <div class="sensor-health-score-row" style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
             <div class="health-large-score" style="font-size:1.8rem; font-weight:800; color:${m.color};">${m.score}%</div>
-            <span style="font-size:0.75rem; color:var(--text-secondary);">${m.status}</span>
+            <span style="font-size:0.75rem; font-weight:600; color:${m.color};">${m.status}</span>
           </div>
           <div class="health-bar-track" style="background:var(--border-light); height:6px; border-radius:3px; overflow:hidden; margin-bottom:14px;">
             <div class="health-bar-fill" style="width:${m.score}%; background:${m.color}; height:100%;"></div>
@@ -362,16 +362,16 @@ class SensorHealthController {
         .join('');
     }
 
-    // 2. Render 90-Day Degradation Timeline
+    // 2. Render Degradation Timeline Progression
     const timelineContainer = document.getElementById('health-timeline-nodes');
     if (timelineContainer && data.timeline) {
       timelineContainer.innerHTML = data.timeline
         .map(
           (node) => `
         <div class="timeline-node-card" style="border-color:${node.border}; background:${node.bg};">
-          <span class="node-day-label" style="color:${node.color}">${node.day}</span>
-          <span class="node-state-title" style="color:${node.color}">${node.title}</span>
-          <p class="node-state-desc">${node.desc}</p>
+          <span class="node-day-label" style="color:${node.color}; font-weight:700;">${node.day}</span>
+          <span class="node-state-title" style="color:${node.color}; font-weight:700; margin:4px 0;">${node.title}</span>
+          <p class="node-state-desc" style="margin:0; font-size:0.72rem; color:var(--text-secondary); line-height:1.35;">${node.desc}</p>
         </div>
       `
         )
