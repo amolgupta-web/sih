@@ -179,12 +179,32 @@
               </div>
             </div>
 
-            <!-- Focal Station Selector Bar -->
-            <div class="focal-station-switcher" style="display:flex; align-items:center; gap:8px; margin: 6px 0 10px 0; font-size:12px;">
-              <span style="color:var(--text-secondary); font-weight:600;">Focal Station:</span>
-              <button class="station-pill-btn active" data-station-id="AWS-JPR-04">Jaipur (AWS-JPR-04)</button>
-              <button class="station-pill-btn" data-station-id="AWS-DEL-07">Delhi (AWS-DEL-07)</button>
-              <button class="station-pill-btn" data-station-id="AWS-CHE-12">Chennai (AWS-CHE-12)</button>
+            <!-- Beautified Focal Station Selector Bar -->
+            <div class="focal-station-switcher">
+              <span class="switcher-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                Focal Station
+              </span>
+              <div class="station-pill-group">
+                <button class="station-pill-btn active" data-station-id="AWS-JPR-04" title="Jaipur Semi-Arid Grid">
+                  <span class="pill-status-dot"></span>
+                  <span class="pill-city-name">Jaipur</span>
+                  <span class="pill-station-id">AWS-JPR-04</span>
+                </button>
+                <button class="station-pill-btn" data-station-id="AWS-DEL-07" title="Delhi Urban Heat Corridor">
+                  <span class="pill-status-dot"></span>
+                  <span class="pill-city-name">Delhi</span>
+                  <span class="pill-station-id">AWS-DEL-07</span>
+                </button>
+                <button class="station-pill-btn" data-station-id="AWS-CHE-12" title="Chennai Coastal Marine Mesh">
+                  <span class="pill-status-dot"></span>
+                  <span class="pill-city-name">Chennai</span>
+                  <span class="pill-station-id">AWS-CHE-12</span>
+                </button>
+              </div>
             </div>
 
             <!-- Canvas Container -->
