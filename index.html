@@ -11,12 +11,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Core Stylesheet -->
+  <!-- Core Professional B2B Stylesheet -->
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
-  <!-- Subtle Atmospheric Ombre Background -->
+  <!-- Subtle Atmospheric Radial Background Glow -->
   <div class="atmospheric-bg"></div>
 
   <div class="app-layout">
@@ -92,7 +92,7 @@
             </p>
           </div>
 
-          <!-- Network Triad Summary -->
+          <!-- Network Triad Summary Stats -->
           <div class="network-summary-grid">
             <div class="summary-stat-box">
               <span class="summary-stat-num" id="stat-active-stations">03</span>
@@ -116,27 +116,37 @@
         <div class="command-workspace-grid">
           <div class="chart-panel-card">
             <div class="chart-panel-header">
+              <!-- Interactive Multi-Factor Layer Toggles -->
               <div class="chart-channel-toggles">
-                <div class="channel-tag">
+                <label class="channel-toggle-label">
+                  <input type="checkbox" id="toggle-temp" checked>
                   <span class="channel-dot temp"></span>
                   <span>Temperature (°C)</span>
-                </div>
-                <div class="channel-tag">
+                </label>
+
+                <label class="channel-toggle-label">
+                  <input type="checkbox" id="toggle-hum">
                   <span class="channel-dot hum"></span>
                   <span>Humidity (%)</span>
-                </div>
-                <div class="channel-tag">
+                </label>
+
+                <label class="channel-toggle-label">
+                  <input type="checkbox" id="toggle-press">
                   <span class="channel-dot press"></span>
                   <span>Pressure (hPa)</span>
-                </div>
-                <div class="channel-tag" style="margin-left:4px">
+                </label>
+
+                <label class="channel-toggle-label">
+                  <input type="checkbox" id="toggle-baseline" checked>
                   <span style="display:inline-block; width:12px; height:2px; background:#2E9B73; border-top:2px dashed #2E9B73"></span>
                   <span style="color:#2E9B73">AI Baseline (Expected)</span>
-                </div>
-                <div class="channel-tag normal-range-tag" title="The safe green zone shows the temperature you would normally expect at this time of day based on past weather history.">
+                </label>
+
+                <label class="channel-toggle-label normal-range-tag" title="The safe green zone shows the temperature you would normally expect at this time of day based on past weather history.">
+                  <input type="checkbox" id="toggle-envelope" checked>
                   <span class="channel-band-swatch"></span>
                   <span style="font-weight:600; color:var(--brand-teal);">Normal Daily Range (Safe Zone)</span>
-                </div>
+                </label>
               </div>
 
               <div class="timeframe-group">
@@ -175,6 +185,7 @@
               </div>
             </div>
 
+            <!-- Clean Chart Canvas Wrapper (Stray text removed) -->
             <div class="unified-chart-wrap">
               <canvas id="unified-comparative-canvas"></canvas>
             </div>
@@ -188,7 +199,7 @@
             </div>
           </div>
 
-          <!-- Attention Queue -->
+          <!-- Prioritized Attention Queue -->
           <div class="queue-panel-card">
             <div class="queue-header">
               <div class="queue-title">
@@ -306,7 +317,7 @@
             </div>
           </div>
 
-          <!-- Raw vs Imputed (AI Estimated) Data Audit Card -->
+          <!-- Raw vs Imputed Data Audit Card -->
           <div class="imputation-audit-card">
             <div class="impute-box">
               <span class="impute-label">Raw Sensor Reading (Unfiltered)</span>
@@ -326,7 +337,7 @@
             </div>
           </div>
 
-          <!-- Dedicated Forensic Canvas Graph Card -->
+          <!-- City Forensic Telemetry Graph Card -->
           <div class="investigate-chart-card" style="background:#ffffff; border:1px solid var(--border-light); border-radius:8px; padding:16px; box-shadow:var(--shadow-sm);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
               <div>
@@ -450,8 +461,10 @@
         </div>
 
         <div class="sensor-health-layout">
+          <!-- 3 Sensor Health Cards Grid -->
           <div class="sensor-health-overview-grid" id="health-cards-grid"></div>
 
+          <!-- 90-Day Degradation Timeline Card -->
           <div class="lifecycle-timeline-card">
             <div>
               <h3 style="font-size:1.05rem; font-weight:700" id="health-timeline-title">Temperature Sensor 90-Day Degradation Timeline (AWS-JPR-04)</h3>
