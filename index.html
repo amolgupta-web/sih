@@ -232,7 +232,7 @@
               <span style="font-size:0.72rem; color:var(--text-secondary)">Click node to inspect</span>
             </div>
             <div class="map-stage-wrap">
-              <svg id="network-map-svg" viewBox="0 0 450 380"></svg>
+              <svg id="network-map-svg" viewBox="0 0 420 340"></svg>
             </div>
             <div style="font-size:0.72rem; color:var(--text-secondary); display:flex; justify-content:space-between">
               <span>● Red: Anomaly Detected</span>
@@ -318,6 +318,23 @@
             </div>
           </div>
 
+          <!-- Dedicated Forensic Canvas Graph Card -->
+          <div class="investigate-chart-card" style="background:#ffffff; border:1px solid var(--border-light); border-radius:8px; padding:16px; box-shadow:var(--shadow-sm);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <div>
+                <h4 style="font-size:0.95rem; font-weight:700; color:var(--text-primary);" id="inv-chart-title">Incident Forensic Waveform & Baseline Envelope</h4>
+                <p style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">Comparing raw telemetry stream against AI imputed recovery trajectory.</p>
+              </div>
+              <div style="display:flex; gap:12px; font-size:0.74rem;">
+                <span style="display:flex; align-items:center; gap:5px;"><span style="width:10px; height:2.5px; background:#D9534F; display:inline-block;"></span> Observed Sensor Stream</span>
+                <span style="display:flex; align-items:center; gap:5px;"><span style="width:10px; height:2.5px; background:#2E9B73; border-top:2px dashed #2E9B73; display:inline-block;"></span> AI Baseline Imputation</span>
+              </div>
+            </div>
+            <div style="position:relative; width:100%; height:230px;">
+              <canvas id="investigate-forensic-canvas" style="width:100%; height:100%; display:block;"></canvas>
+            </div>
+          </div>
+
           <!-- Event Replay Interactive Scrubber -->
           <div class="replay-scrubber-card">
             <div class="replay-header">
@@ -332,39 +349,8 @@
               </div>
             </div>
 
-            <!-- Scrubber Steps -->
-            <div id="replay-steps-container" class="replay-timeline-steps">
-              <div class="replay-step-card active-step">
-                <div class="step-time">14:31:30</div>
-                <div class="step-val">25.1°C</div>
-                <div class="step-tag tag-normal">NOMINAL</div>
-              </div>
-              <div class="replay-step-card">
-                <div class="step-time">14:31:45</div>
-                <div class="step-val">25.3°C</div>
-                <div class="step-tag tag-normal">NOMINAL</div>
-              </div>
-              <div class="replay-step-card">
-                <div class="step-time">14:32:00</div>
-                <div class="step-val">25.2°C</div>
-                <div class="step-tag tag-normal">NOMINAL</div>
-              </div>
-              <div class="replay-step-card step-spike">
-                <div class="step-time">14:32:15</div>
-                <div class="step-val" style="color:var(--status-critical)">55.2°C</div>
-                <div class="step-tag tag-critical">SPIKE FLAGGED</div>
-              </div>
-              <div class="replay-step-card">
-                <div class="step-time">14:32:16</div>
-                <div class="step-val">AI Sweep</div>
-                <div class="step-tag tag-eval">EVALUATING</div>
-              </div>
-              <div class="replay-step-card step-spike">
-                <div class="step-time">14:32:18</div>
-                <div class="step-val">Classified</div>
-                <div class="step-tag tag-critical">CRITICAL ANOMALY</div>
-              </div>
-            </div>
+            <!-- Scrubber Steps Container -->
+            <div id="replay-steps-container" class="replay-timeline-steps"></div>
 
             <div id="replay-step-note" style="font-size:0.78rem; color:var(--text-secondary); background:var(--bg-app); padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-light); margin-top:10px;">
               Step 4 of 6: Instantaneous +30.0°C jump registered in 15 seconds. Thermal inertia check failed.
@@ -373,57 +359,14 @@
 
           <!-- Ranked Evidence Stack & Reality Check -->
           <div class="evidence-reality-grid">
-            <!-- Ranked Evidence Stack -->
             <div class="evidence-stack-card">
               <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
                 <h4 style="font-size:0.95rem; font-weight:700">Why SkyGuard Flagged This (Ranked Evidence)</h4>
                 <span style="font-size:0.72rem; color:var(--text-secondary)">Ranked by Contribution</span>
               </div>
-
-              <div id="investigate-evidence-list" class="evidence-list">
-                <div class="evidence-item">
-                  <div class="evidence-top">
-                    <span class="evidence-num-title">01 • Historical Baseline Deviation</span>
-                    <span class="trust-badge badge-critical">Impact: High</span>
-                  </div>
-                  <p class="evidence-desc">
-                    55.2°C is significantly outside the expected historical diurnal range. Expected seasonal range for this hour: <strong>22.0°C – 27.5°C</strong> (Z-Score: +9.8σ).
-                  </p>
-                </div>
-
-                <div class="evidence-item">
-                  <div class="evidence-top">
-                    <span class="evidence-num-title">02 • Temporal Deviation Rate</span>
-                    <span class="trust-badge badge-critical">Impact: High</span>
-                  </div>
-                  <p class="evidence-desc">
-                    The temperature increased by approximately 30°C within 15 seconds. Thermal inertia of ambient air physically forbids this rate of change without explosive combustion.
-                  </p>
-                </div>
-
-                <div class="evidence-item">
-                  <div class="evidence-top">
-                    <span class="evidence-num-title">03 • Cross-Sensor Consistency</span>
-                    <span class="trust-badge badge-critical">Impact: High</span>
-                  </div>
-                  <p class="evidence-desc">
-                    Relative humidity (44%) and atmospheric pressure (1008 hPa) do not support an extreme heat event. Clausius-Clapeyron saturation vapor pressure would require impossible dew points (&gt;44°C).
-                  </p>
-                </div>
-
-                <div class="evidence-item">
-                  <div class="evidence-top">
-                    <span class="evidence-num-title">04 • Nearby Station Comparison</span>
-                    <span class="trust-badge badge-critical">Impact: Very High</span>
-                  </div>
-                  <p class="evidence-desc">
-                    4 nearby mesonet stations within 15km remain between <strong>24.2°C and 25.8°C</strong>. An atmospheric heat event cannot be physically confined to a 10-meter footprint.
-                  </p>
-                </div>
-              </div>
+              <div id="investigate-evidence-list" class="evidence-list"></div>
             </div>
 
-            <!-- Reality Check Component -->
             <div class="reality-check-card">
               <div>
                 <h4 style="font-size:0.95rem; font-weight:700">Reality Check: Weather or Sensor Fault?</h4>
@@ -481,7 +424,6 @@
             <p class="view-subtitle">Continuous acoustic, resistive, and capacitive drift analysis across mesonet transducers.</p>
           </div>
         </div>
-
         <div class="sensor-health-layout">
           <div class="sensor-health-overview-grid"></div>
         </div>
@@ -500,7 +442,6 @@
             Active Work Orders: <strong>3 Pending</strong>
           </div>
         </div>
-
         <div class="maintenance-layout">
           <div class="maintenance-table-card">
             <table class="data-table">
@@ -540,7 +481,6 @@
           <div class="trust-log-filter-bar" style="margin-bottom:12px;">
             <input type="text" id="trust-log-search" class="search-input-box" placeholder="Search by station, sensor, or status..." style="padding:6px 12px; border:1px solid var(--border-light); border-radius:4px; width:280px;">
           </div>
-
           <div class="maintenance-table-card">
             <table class="data-table">
               <thead>
