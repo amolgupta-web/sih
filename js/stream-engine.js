@@ -1,83 +1,212 @@
 /**
- * SkyGuard AI — B2B Operational Telemetry Stream Engine
- * Simulates real-time mesonet data across weather stations with support for 3
- * core product evaluation scenarios: Normal Weather, Genuine Weather Event, and Sensor Failure.
- * Continuously pushes rolling buffer updates to the live chart canvas and streams inference
- * requests to the Python ML backend at /api/predict.
+ * SkyGuard AI — Operational Real-Time Telemetry Stream Engine
+ * Simulates high-frequency weather station sensor network telemetry,
+ * rolling data buffers (30 pts), multi-station switching (Jaipur, Delhi, Chennai),
+ * and dynamic scenario injection (Normal vs Failure).
  */
 
 class OperationalStreamEngine {
   constructor() {
+    this.subscribers = [];
+    this.timer = null;
+    this.intervalMs = 2500;
+    this.activeScenario = 'failure'; // Default to failure for anomaly showcase
+    this.activeStationId = 'AWS-JPR-04';
+
+    // Station Network Registry
     this.stations = {
-      'AWS-JPR-04': { name: 'Jaipur (Semi-Arid)', region: 'Western Grid', baseTemp: 25.0, baseHum: 44, basePress: 1008.2, status: 'Critical', trust: 12 },
-      'AWS-DEL-07': { name: 'New Delhi (Central)', region: 'Northern Grid', baseTemp: 24.7, baseHum: 76, basePress: 1012.4, status: 'Attention', trust: 74 },
-      'AWS-MUM-02': { name: 'Mumbai (Harbor)', region: 'Coastal Grid', baseTemp: 29.2, baseHum: 84, basePress: 1010.8, status: 'Attention', trust: 62 },
-      'AWS-BLR-02': { name: 'Bengaluru (Plateau)', region: 'Southern Grid', baseTemp: 21.6, baseHum: 58, basePress: 1014.2, status: 'Healthy', trust: 98 },
-      'AWS-HIM-09': { name: 'Shimla (Alpine)', region: 'Highland Grid', baseTemp: 14.5, baseHum: 68, basePress: 994.0, status: 'Healthy', trust: 97 }
+      'AWS-JPR-04': {
+        id: 'AWS-JPR-04',
+        name: 'Jaipur (Semi-Arid Grid)',
+        region: 'Northwest Arid',
+        baseTemp: 26.2,
+        baseHum: 44.0,
+        basePress: 1008.2,
+        trust: 82
+      },
+      'AWS-DEL-07': {
+        id: 'AWS-DEL-07',
+        name: 'Delhi (Urban Heat Corridor)',
+        region: 'NCR Urban Mesh',
+        baseTemp: 29.5,
+        baseHum: 58.0,
+        basePress: 1005.4,
+        trust: 89
+      },
+      'AWS-CHE-12': {
+        id: 'AWS-CHE-12',
+        name: 'Chennai (Coastal Marine Mesh)',
+        region: 'Coromandel Coast',
+        baseTemp: 31.8,
+        baseHum: 78.5,
+        basePress: 1011.0,
+        trust: 94
+      }
     };
 
-    this.activeStationId = 'AWS-JPR-04';
-    this.intervalMs = 2500;
-    this.timer = null;
-
-    // Active scenario mode: 'normal' | 'storm' | 'failure'
-    this.activeScenario = 'failure';
-    this.scenarioStep = 0;
-
-    // Event listeners
-    this.listeners = [];
-
-    // Station telemetry rolling buffers
+    // Initialize 30-point rolling buffers per station
     this.stationBuffers = {};
-    this.initBuffers();
+    Object.keys(this.stations).forEach((stId) => {
+      this.stationBuffers[stId] = this.createInitialBuffer(stId);
+    });
 
-    // Start background telemetry loop
     this.start();
   }
 
-  initBuffers() {
-    Object.keys(this.stations).forEach((id) => {
-      const st = this.stations[id];
-      const buffer = {
-        timestamps: [],
-        temp: [],
-        imputedTemp: [],
-        humidity: [],
-        pressure: [],
-        anomalies: []
-      };
+  createInitialBuffer(stationId) {
+    const st = this.stations[stationId];
+    const now = Date.now();
+    const timestamps = [];
+    const temp = [];
+    const humidity = [];
+    const pressure = [];
+    const anomalies = [];
 
-      const now = Date.now();
-      const count = 30;
-      for (let i = count; i >= 0; i--) {
-        const time = new Date(now - i * 2500);
-        const label = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    for (let i = 29; i >= 0; i--) {
+      const time = new Date(now - i * this.intervalMs);
+      timestamps.push(time.toLocaleTimeString());
 
-        const t = parseFloat((st.baseTemp + (Math.random() - 0.5) * 0.4).toFixed(1));
-        const h = parseFloat((st.baseHum + (Math.random() - 0.5) * 1.0).toFixed(1));
-        const p = parseFloat((st.basePress + (Math.random() - 0.5) * 0.3).toFixed(1));
+      const noiseT = (Math.random() - 0.5) * 0.4;
+      const noiseH = (Math.random() - 0.5) * 0.8;
+      const noiseP = (Math.random() - 0.5) * 0.2;
 
-        buffer.timestamps.push(label);
-        buffer.temp.push(t);
-        buffer.imputedTemp.push(25.4);
-        buffer.humidity.push(h);
-        buffer.pressure.push(p);
+      // Inject anomaly jump on Jaipur in failure scenario
+      if (stationId === 'AWS-JPR-04' && this.activeScenario === 'failure' && i <= 6) {
+        temp.push(Number((54.5 + noiseT * 2).toFixed(1)));
+        if (i === 6) anomalies.push(29 - i);
+      } else {
+        temp.push(Number((st.baseTemp + noiseT).toFixed(1)));
       }
 
-      this.stationBuffers[id] = buffer;
+      humidity.push(Number((st.baseHum + noiseH).toFixed(1)));
+      pressure.push(Number((st.basePress + noiseP).toFixed(1)));
+    }
+
+    return { timestamps, temp, humidity, pressure, anomalies };
+  }
+
+  subscribe(callback) {
+    this.subscribers.push(callback);
+    return () => {
+      this.subscribers = this.subscribers.filter((cb) => cb !== callback);
+    };
+  }
+
+  broadcast(payload) {
+    this.subscribers.forEach((cb) => {
+      try {
+        cb(payload);
+      } catch (err) {
+        console.error('Error in stream subscriber:', err);
+      }
+    });
+  }
+
+  setScenario(scenario) {
+    if (this.activeScenario === scenario) return;
+    this.activeScenario = scenario;
+
+    // Reset Jaipur buffer to match scenario
+    this.stationBuffers['AWS-JPR-04'] = this.createInitialBuffer('AWS-JPR-04');
+    this.tick();
+  }
+
+  setStation(stationId) {
+    if (!this.stations[stationId]) return;
+    this.activeStationId = stationId;
+
+    const buffer = this.stationBuffers[stationId];
+    if (window.UnifiedComparativeChartInstance && buffer) {
+      window.UnifiedComparativeChartInstance.updateData(buffer);
+    }
+
+    this.tick();
+  }
+
+  tick() {
+    const nowStr = new Date().toLocaleTimeString();
+
+    // Advance rolling buffer for every station
+    Object.keys(this.stations).forEach((stId) => {
+      const st = this.stations[stId];
+      const buffer = this.stationBuffers[stId];
+
+      const noiseT = (Math.random() - 0.5) * 0.4;
+      const noiseH = (Math.random() - 0.5) * 0.8;
+      const noiseP = (Math.random() - 0.5) * 0.2;
+
+      let nextTemp;
+      const isJaipurFailure = stId === 'AWS-JPR-04' && this.activeScenario === 'failure';
+
+      if (isJaipurFailure) {
+        // Dynamic oscillating failure curve around 55.2°C
+        nextTemp = Number((54.0 + Math.sin(Date.now() / 800) * 1.5 + noiseT).toFixed(1));
+      } else {
+        nextTemp = Number((st.baseTemp + noiseT).toFixed(1));
+      }
+
+      const nextHum = Number((st.baseHum + noiseH).toFixed(1));
+      const nextPress = Number((st.basePress + noiseP).toFixed(1));
+
+      buffer.timestamps.push(nowStr);
+      buffer.temp.push(nextTemp);
+      buffer.humidity.push(nextHum);
+      buffer.pressure.push(nextPress);
+
+      // Shift window to preserve 30 points
+      if (buffer.timestamps.length > 30) {
+        buffer.timestamps.shift();
+        buffer.temp.shift();
+        buffer.humidity.shift();
+        buffer.pressure.shift();
+        buffer.anomalies = buffer.anomalies
+          .map((idx) => idx - 1)
+          .filter((idx) => idx >= 0);
+      }
+
+      // Anomaly detection pin throttle
+      if (isJaipurFailure) {
+        const currIdx = buffer.temp.length - 1;
+        const prevTemp = buffer.temp[currIdx - 1] ?? buffer.temp[currIdx];
+        if (Math.abs(nextTemp - prevTemp) >= 4.0 || buffer.anomalies.length === 0) {
+          if (!buffer.anomalies.includes(currIdx)) {
+            buffer.anomalies.push(currIdx);
+          }
+        }
+      }
     });
 
-    // Seed evaluation spike for AWS-JPR-04
-    const jpr = this.stationBuffers['AWS-JPR-04'];
-    if (jpr && jpr.temp.length > 5) {
-      const len = jpr.temp.length;
-      jpr.temp[len - 4] = 25.1;
-      jpr.temp[len - 3] = 25.3;
-      jpr.temp[len - 2] = 25.2;
-      jpr.temp[len - 1] = 54.8;
-      jpr.imputedTemp[len - 1] = 25.4;
-      jpr.anomalies.push(len - 1);
+    const activeSt = this.stations[this.activeStationId];
+    const activeBuffer = this.stationBuffers[this.activeStationId];
+    const isAnomaly = this.activeStationId === 'AWS-JPR-04' && this.activeScenario === 'failure';
+
+    // Direct redraw of active chart
+    if (window.UnifiedComparativeChartInstance && activeBuffer) {
+      window.UnifiedComparativeChartInstance.updateData(activeBuffer);
     }
+
+    // Broadcast state payload
+    this.broadcast({
+      stationId: this.activeStationId,
+      stationName: activeSt.name,
+      reading: {
+        stationId: this.activeStationId,
+        stationName: activeSt.name,
+        temp: activeBuffer.temp[activeBuffer.temp.length - 1],
+        humidity: activeBuffer.humidity[activeBuffer.humidity.length - 1],
+        pressure: activeBuffer.pressure[activeBuffer.pressure.length - 1]
+      },
+      analysis: {
+        isAnomaly,
+        confidence: isAnomaly ? 0.984 : 0.04,
+        imputedVal: 25.4,
+        trustScore: isAnomaly ? 82 : activeSt.trust
+      },
+      scenario: this.activeScenario,
+      networkTrust: isAnomaly ? 86 : 96,
+      buffer: activeBuffer,
+      stations: this.stations
+    });
   }
 
   start() {
@@ -91,145 +220,20 @@ class OperationalStreamEngine {
       this.timer = null;
     }
   }
-
-  setScenario(scenarioKey) {
-    this.activeScenario = scenarioKey;
-    this.scenarioStep = 0;
-    this.tick();
-  }
-
-  setStation(stationId) {
-    if (this.stations[stationId]) {
-      this.activeStationId = stationId;
-      this.tick();
-    }
-  }
-
-  async tick() {
-    const station = this.stations[this.activeStationId];
-    const buffer = this.stationBuffers[this.activeStationId];
-    const now = new Date();
-    const timeLabel = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-    // Dynamic micro-jitter to ensure continuous dynamic movement
-    let jitterT = (Math.random() - 0.5) * 0.4;
-    let jitterH = (Math.random() - 0.5) * 0.8;
-    let jitterP = (Math.random() - 0.5) * 0.3;
-
-    let t = station.baseTemp + jitterT;
-    let h = station.baseHum + jitterH;
-    let p = station.basePress + jitterP;
-    let isForcedAnomaly = false;
-    let isRealStorm = false;
-
-    // Dynamic Scenario Handling
-    if (this.activeScenario === 'failure') {
-      // Fluctuate around ~54-56°C with visible ADC jitter so movement is clear
-      const noise = (Math.sin(Date.now() / 800) * 2.0) + ((Math.random() - 0.5) * 1.2);
-      t = 54.5 + noise;
-      isForcedAnomaly = true;
-      station.status = 'Critical';
-      station.trust = 12;
-    } else if (this.activeScenario === 'storm') {
-      t = station.baseTemp - 7.6 + jitterT;
-      h = Math.min(96, station.baseHum + 26 + jitterH);
-      p = station.basePress - 6.2 + jitterP;
-      isRealStorm = true;
-      station.status = 'Healthy';
-      station.trust = 94;
-    } else {
-      station.status = 'Healthy';
-      station.trust = 98;
-    }
-
-    t = parseFloat(t.toFixed(1));
-    h = parseFloat(h.toFixed(1));
-    p = parseFloat(p.toFixed(1));
-
-    const reading = {
-      stationId: this.activeStationId,
-      stationName: station.name,
-      timestamp: timeLabel,
-      temp: t,
-      humidity: h,
-      pressure: p,
-      forceAnomaly: isForcedAnomaly,
-      isRealStorm,
-      scenario: this.activeScenario
-    };
-
-    // Client fallback analysis defaults
-    let analysis = {
-      isAnomaly: isForcedAnomaly,
-      confidence: 0.98,
-      imputedVal: 25.4,
-      verdict: isForcedAnomaly ? 'PROBABLE SENSOR ANOMALY' : 'TRUSTED METEOROLOGICAL DATA'
-    };
-
-    try {
-      if (window.WeatherDataTrustEngineInstance?.analyzeReadingAsync) {
-        analysis = await window.WeatherDataTrustEngineInstance.analyzeReadingAsync(reading);
-      } else if (window.WeatherDataTrustEngineInstance?.analyzeReading) {
-        analysis = window.WeatherDataTrustEngineInstance.analyzeReading(reading);
-      }
-    } catch (err) {
-      console.warn("Inference API fallback engaged:", err);
-    }
-
-    // Append latest data point to rolling buffer
-    buffer.timestamps.push(timeLabel);
-    buffer.temp.push(t);
-    buffer.imputedTemp.push(analysis.imputedVal !== undefined && analysis.imputedVal !== null ? analysis.imputedVal : 25.4);
-    buffer.humidity.push(h);
-    buffer.pressure.push(p);
-
-    if (analysis.isAnomaly) {
-      buffer.anomalies.push(buffer.temp.length - 1);
-    }
-
-    // Window size fixed to 30 data points; shift oldest to scroll left
-    while (buffer.timestamps.length > 30) {
-      buffer.timestamps.shift();
-      buffer.temp.shift();
-      buffer.imputedTemp.shift();
-      buffer.humidity.shift();
-      buffer.pressure.shift();
-      buffer.anomalies = buffer.anomalies.map(idx => idx - 1).filter(idx => idx >= 0);
-    }
-
-    // Direct render call to eliminate race conditions with listeners
-    if (window.UnifiedComparativeChartInstance) {
-      window.UnifiedComparativeChartInstance.updateData(buffer);
-    }
-
-    // Broadcast frame to registered event subscribers
-    this.notify({
-      reading,
-      analysis,
-      buffer,
-      stationId: this.activeStationId,
-      scenario: this.activeScenario,
-      stations: this.stations
-    });
-  }
-
-  subscribe(callback) {
-    this.listeners.push(callback);
-    return () => {
-      this.listeners = this.listeners.filter(cb => cb !== callback);
-    };
-  }
-
-  notify(data) {
-    for (const cb of this.listeners) {
-      try {
-        cb(data);
-      } catch (err) {
-        console.error("StreamEngine listener error:", err);
-      }
-    }
-  }
 }
 
 // Global Singleton Instance
-window.OperationalStreamEngineInstance = new OperationalStreamEngine();
+window.OperationalStreamEngineInstance = null;
+
+window.initStreamEngine = function () {
+  if (!window.OperationalStreamEngineInstance) {
+    window.OperationalStreamEngineInstance = new OperationalStreamEngine();
+  }
+  return window.OperationalStreamEngineInstance;
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => window.initStreamEngine());
+} else {
+  window.initStreamEngine();
+}
