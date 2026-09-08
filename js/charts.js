@@ -1,74 +1,74 @@
 /**
- * SkyGuard AI — Unified Multi-Sensor Comparative Chart
- * Plots Temperature, Humidity, and Atmospheric Pressure on a synchronized comparative timeline
- * with expected normal tolerance bands, raw readings, and AI imputed values.
+ * SkyGuard AI — Unified Comparative Canvas Chart
+ * High-performance DPI-aware HTML5 Canvas renderer for multi-parameter mesonet telemetry.
+ * Displays real-time rolling curves for Temperature, Humidity, Pressure, Diurnal Confidence Bands,
+ * and AI Anomaly Highlights.
  */
 
 class UnifiedComparativeChart {
   constructor(canvasId) {
-    this.canvasId = canvasId;
     this.canvas = document.getElementById(canvasId);
-    this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
+    if (!this.canvas) return;
 
-    // Channels configuration
-    this.channels = {
-      temp: { label: 'Temperature', unit: '°C', color: '#C94F4F', active: true, min: 15, max: 60, expMin: 22, expMax: 28 },
-      humidity: { label: 'Humidity', unit: '%', color: '#2563EB', active: true, min: 20, max: 100, expMin: 35, expMax: 75 },
-      pressure: { label: 'Pressure', unit: ' hPa', color: '#C98A1C', active: true, min: 990, max: 1030, expMin: 1004, expMax: 1020 }
-    };
+    this.ctx = this.canvas.getContext('2d');
+    this.buffer = null;
+    this.timeRange = '3h'; // Set default filter to 3h
 
-    this.data = {
-      timestamps: [],
-      temp: [],
-      imputedTemp: [],
-      humidity: [],
-      pressure: [],
-      anomalies: []
-    };
+    this.initCanvas();
+    this.bindEvents();
+    this.bindStreamEngine();
+  }
 
-    this.hoverIdx = -1;
-    this.width = 880;
-    this.height = 320;
-
-    if (this.canvas) {
-      this.init();
+  initCanvas() {
+    this.resizeCanvas();
+    this.resizeObserver = new ResizeObserver(() => this.resizeCanvas());
+    if (this.canvas.parentElement) {
+      this.resizeObserver.observe(this.canvas.parentElement);
     }
   }
 
-  init() {
-    this.resize();
-    window.addEventListener('resize', () => this.resize());
+  resizeCanvas() {
+    if (!this.canvas || !this.canvas.parentElement) return;
 
-    // Observe container in case layout evaluates late
-    if (window.ResizeObserver && this.canvas.parentElement) {
-      const ro = new ResizeObserver(() => this.resize());
-      ro.observe(this.canvas.parentElement);
-    }
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
 
-    this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
-    this.canvas.addEventListener('mouseleave', () => {
-      this.hoverIdx = -1;
-      this.render();
+    this.width = rect.width || 800;
+    this.height = rect.height || 320;
+
+    this.canvas.width = this.width * dpr;
+    this.canvas.height = this.height * dpr;
+
+    this.canvas.style.width = `${this.width}px`;
+    this.canvas.style.height = `${this.height}px`;
+
+    this.ctx.resetTransform();
+    this.ctx.scale(dpr, dpr);
+
+    this.render();
+  }
+
+  bindEvents() {
+    // Range selector click buttons
+    const rangeBtns = document.querySelectorAll('.chart-timeframe-controls .time-btn');
+    rangeBtns.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        rangeBtns.forEach((b) => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        this.timeRange = e.currentTarget.dataset.range || '3h';
+        this.render();
+      });
     });
-
-    this.bindStreamEngine();
   }
 
   bindStreamEngine() {
     const attach = () => {
       if (window.OperationalStreamEngineInstance) {
-        const stationId = window.OperationalStreamEngineInstance.activeStationId || 'AWS-JPR-04';
-        const buffer = window.OperationalStreamEngineInstance.stationBuffers?.[stationId];
-        if (buffer) {
-          this.updateData(buffer);
+        const activeId = window.OperationalStreamEngineInstance.activeStationId || 'AWS-JPR-04';
+        const activeBuffer = window.OperationalStreamEngineInstance.stationBuffers?.[activeId];
+        if (activeBuffer) {
+          this.updateData(activeBuffer);
         }
-
-        // Subscribe to live frame updates
-        window.OperationalStreamEngineInstance.subscribe((payload) => {
-          if (payload && payload.buffer) {
-            this.updateData(payload.buffer);
-          }
-        });
       } else {
         setTimeout(attach, 100);
       }
@@ -76,53 +76,9 @@ class UnifiedComparativeChart {
     attach();
   }
 
-  resize() {
-    if (!this.canvas) {
-      this.canvas = document.getElementById(this.canvasId);
-      if (!this.canvas) return;
-      this.ctx = this.canvas.getContext('2d');
-    }
-
-    const parent = this.canvas.parentElement;
-    const rect = parent ? parent.getBoundingClientRect() : null;
-
-    this.width = rect && rect.width > 50 ? rect.width : (this.canvas.clientWidth || 880);
-    this.height = rect && rect.height > 50 ? rect.height : 320;
-
-    const dpr = window.devicePixelRatio || 1;
-    this.canvas.width = Math.floor(this.width * dpr);
-    this.canvas.height = Math.floor(this.height * dpr);
-
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    this.ctx.scale(dpr, dpr);
-
-    this.render();
-  }
-
   updateData(buffer) {
-    if (!buffer) return;
-    this.data = buffer;
+    this.buffer = buffer;
     this.render();
-  }
-
-  onMouseMove(e) {
-    if (!this.canvas) return;
-    const rect = this.canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-
-    const padLeft = 45;
-    const padRight = 45;
-    const chartW = this.width - padLeft - padRight;
-    const count = this.data.timestamps ? this.data.timestamps.length : 0;
-
-    if (count > 1) {
-      const step = chartW / (count - 1);
-      const idx = Math.round((x - padLeft) / step);
-      if (idx >= 0 && idx < count) {
-        this.hoverIdx = idx;
-        this.render();
-      }
-    }
   }
 
   render() {
@@ -134,221 +90,161 @@ class UnifiedComparativeChart {
 
     ctx.clearRect(0, 0, w, h);
 
-    const padTop = 20;
-    const padBottom = 30;
-    const padLeft = 45;
-    const padRight = 45;
-    const chartW = w - padLeft - padRight;
-    const chartH = h - padTop - padBottom;
+    const padLeft = 46;
+    const padRight = 24;
+    const padTop = 32;
+    const padBottom = 34;
 
-    if (!this.data.timestamps || this.data.timestamps.length < 2) return;
+    const plotW = w - padLeft - padRight;
+    const plotH = h - padTop - padBottom;
 
-    // 1. Grid Rows
-    ctx.strokeStyle = '#EEF2F0';
+    // Background Grid
+    ctx.strokeStyle = '#EEF2F6';
     ctx.lineWidth = 1;
     const gridRows = 4;
     for (let i = 0; i <= gridRows; i++) {
-      const y = padTop + (chartH / gridRows) * i;
+      const y = padTop + (plotH / gridRows) * i;
       ctx.beginPath();
       ctx.moveTo(padLeft, y);
       ctx.lineTo(w - padRight, y);
       ctx.stroke();
+
+      // Left Axis Value (0°C to 60°C)
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'right';
+      const labelVal = Math.round(60 - (60 / gridRows) * i);
+      ctx.fillText(`${labelVal}°`, padLeft - 8, y + 3);
     }
 
-    const getY = (val, cfg) => {
-      const clamped = Math.max(cfg.min, Math.min(cfg.max, val));
-      const norm = (clamped - cfg.min) / (cfg.max - cfg.min);
-      return padTop + chartH - norm * chartH;
-    };
+    if (!this.buffer || !this.buffer.temp || this.buffer.temp.length === 0) {
+      return;
+    }
 
-    const getX = (idx) => {
-      return padLeft + (idx / (this.data.timestamps.length - 1)) * chartW;
-    };
+    const temps = this.buffer.temp;
+    const len = temps.length;
+    const stepX = plotW / Math.max(1, len - 1);
 
-    // 2. Expected Normal Range Band for Temperature (22°C – 28°C)
-    const expTop = getY(this.channels.temp.expMax, this.channels.temp);
-    const expBottom = getY(this.channels.temp.expMin, this.channels.temp);
+    // 1. Shaded Expected Diurnal Baseline Band (22°C to 28°C)
+    const yBaselineTop = padTop + plotH * (1 - 28 / 60);
+    const yBaselineBottom = padTop + plotH * (1 - 22 / 60);
+
     ctx.fillStyle = 'rgba(46, 155, 115, 0.08)';
-    ctx.fillRect(padLeft, expTop, chartW, expBottom - expTop);
+    ctx.fillRect(padLeft, yBaselineTop, plotW, yBaselineBottom - yBaselineTop);
 
-    // 3. Sensor Channel Lines
-    const drawLine = (vals, cfg, isDashed = false) => {
-      ctx.save();
+    // 2. AI Imputed Dotted Line (25.4°C)
+    const yImputed = padTop + plotH * (1 - 25.4 / 60);
+    ctx.beginPath();
+    ctx.setLineDash([5, 4]);
+    ctx.strokeStyle = '#2E9B73';
+    ctx.lineWidth = 2;
+    ctx.moveTo(padLeft, yImputed);
+    ctx.lineTo(w - padRight, yImputed);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 3. Humidity Secondary Curve (Scaled 0-100% to lower third)
+    if (this.buffer.humidity && this.buffer.humidity.length > 0) {
       ctx.beginPath();
-      if (isDashed) ctx.setLineDash([4, 4]);
-
-      for (let i = 0; i < vals.length; i++) {
-        const val = vals[i];
-        if (val === null || val === undefined) continue;
-        const x = getX(i);
-        const y = getY(val, cfg);
-        if (i === 0) ctx.moveTo(x, y);
+      ctx.strokeStyle = 'rgba(59, 130, 246, 0.45)';
+      ctx.lineWidth = 1.8;
+      this.buffer.humidity.forEach((hum, idx) => {
+        const x = padLeft + idx * stepX;
+        const y = padTop + plotH - (hum / 100) * (plotH * 0.35);
+        if (idx === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
-      }
-
-      ctx.strokeStyle = cfg.color;
-      ctx.lineWidth = isDashed ? 1.8 : 2.0;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+      });
       ctx.stroke();
-      ctx.restore();
-    };
-
-    if (this.channels.pressure.active) {
-      drawLine(this.data.pressure, this.channels.pressure);
-    }
-    if (this.channels.humidity.active) {
-      drawLine(this.data.humidity, this.channels.humidity);
-    }
-    if (this.channels.temp.active) {
-      drawLine(this.data.temp, this.channels.temp);
     }
 
-    // 4. AI Imputed Values Line (Green Dashed Overlay)
-    const hasImputed = this.data.imputedTemp && this.data.imputedTemp.some(v => v !== null);
-    if (hasImputed) {
-      ctx.save();
+    // 4. Pressure Curve (Scaled around 1000-1020 hPa to bottom area)
+    if (this.buffer.pressure && this.buffer.pressure.length > 0) {
       ctx.beginPath();
-      ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = '#10B981';
-      ctx.lineWidth = 2.0;
-
-      let started = false;
-      for (let i = 0; i < this.data.imputedTemp.length; i++) {
-        const val = this.data.imputedTemp[i] !== null ? this.data.imputedTemp[i] : this.data.temp[i];
-        const x = getX(i);
-        const y = getY(val, this.channels.temp);
-        if (!started) {
-          ctx.moveTo(x, y);
-          started = true;
-        } else {
-          ctx.lineTo(x, y);
-        }
-      }
+      ctx.strokeStyle = 'rgba(201, 138, 28, 0.55)';
+      ctx.lineWidth = 1.8;
+      this.buffer.pressure.forEach((press, idx) => {
+        const x = padLeft + idx * stepX;
+        const normalizedP = Math.max(0, Math.min(1, (press - 980) / 40));
+        const y = padTop + plotH * 0.7 - normalizedP * (plotH * 0.2);
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
       ctx.stroke();
-      ctx.restore();
     }
 
-    // 5. Anomaly Spike Pins
-    if (this.data.anomalies && this.data.anomalies.length > 0) {
-      for (const anomIdx of this.data.anomalies) {
-        if (anomIdx >= 0 && anomIdx < this.data.temp.length) {
-          const x = getX(anomIdx);
-          const y = getY(this.data.temp[anomIdx], this.channels.temp);
+    // 5. Active Primary Temperature Trajectory
+    ctx.beginPath();
+    ctx.strokeStyle = '#D9534F';
+    ctx.lineWidth = 2.4;
+    temps.forEach((t, idx) => {
+      const x = padLeft + idx * stepX;
+      const y = padTop + plotH * (1 - Math.min(60, Math.max(0, t)) / 60);
+      if (idx === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
 
-          ctx.save();
-          // Halo
-          ctx.beginPath();
-          ctx.arc(x, y, 9, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(201, 79, 79, 0.25)';
-          ctx.fill();
+    // 6. Draw Points and Anomaly Pins
+    temps.forEach((t, idx) => {
+      const x = padLeft + idx * stepX;
+      const y = padTop + plotH * (1 - Math.min(60, Math.max(0, t)) / 60);
 
-          // Dot
-          ctx.beginPath();
-          ctx.arc(x, y, 5, 0, Math.PI * 2);
-          ctx.fillStyle = '#C94F4F';
-          ctx.strokeStyle = '#FFFFFF';
-          ctx.lineWidth = 2;
-          ctx.fill();
-          ctx.stroke();
+      const isAnomaly = this.buffer.anomalies && this.buffer.anomalies.includes(idx);
 
-          // Tag
-          ctx.fillStyle = '#C94F4F';
-          ctx.font = '700 9px -apple-system, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('ANOMALY', x, y - 12);
-          ctx.restore();
-        }
-      }
-    }
-
-    // 6. Hover Crosshair & Tooltip Card
-    if (this.hoverIdx >= 0 && this.hoverIdx < this.data.timestamps.length) {
-      const idx = this.hoverIdx;
-      const hX = getX(idx);
-      const time = this.data.timestamps[idx];
-      const tVal = this.data.temp[idx];
-      const hVal = this.data.humidity[idx];
-      const pVal = this.data.pressure[idx];
-      const impVal = this.data.imputedTemp[idx];
-      const isAnom = this.data.anomalies && this.data.anomalies.includes(idx);
-
-      ctx.save();
       ctx.beginPath();
-      ctx.setLineDash([2, 2]);
-      ctx.moveTo(hX, padTop);
-      ctx.lineTo(hX, padTop + chartH);
-      ctx.strokeStyle = '#929E9A';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.restore();
-
-      const cardW = 190;
-      const cardH = impVal ? 84 : 68;
-      let cardX = hX + 12;
-      if (cardX + cardW > w - padRight) cardX = hX - cardW - 12;
-      const cardY = padTop + 10;
-
-      ctx.save();
-      ctx.fillStyle = '#FFFFFF';
-      ctx.strokeStyle = isAnom ? '#C94F4F' : '#E2E8E5';
-      ctx.lineWidth = isAnom ? 1.5 : 1.0;
-      ctx.shadowColor = 'rgba(23, 32, 30, 0.08)';
-      ctx.shadowBlur = 8;
-      ctx.beginPath();
-      ctx.roundRect(cardX, cardY, cardW, cardH, 6);
+      ctx.arc(x, y, isAnomaly ? 5 : 3, 0, Math.PI * 2);
+      ctx.fillStyle = isAnomaly ? '#C94F4F' : '#FFFFFF';
+      ctx.strokeStyle = '#C94F4F';
+      ctx.lineWidth = 2;
       ctx.fill();
       ctx.stroke();
 
-      ctx.fillStyle = '#17201E';
-      ctx.font = '700 10px -apple-system, sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText(`${time} ${isAnom ? '— ANOMALY DETECTED' : '— Nominal'}`, cardX + 10, cardY + 16);
-
-      ctx.font = '500 10px -apple-system, sans-serif';
-      ctx.fillStyle = '#C94F4F';
-      ctx.fillText(`Temp: ${tVal}°C ${isAnom ? '(Observed)' : ''}`, cardX + 10, cardY + 32);
-
-      if (impVal) {
-        ctx.fillStyle = '#10B981';
-        ctx.fillText(`AI Imputed: ${impVal}°C (91% conf)`, cardX + 10, cardY + 46);
+      // Only draw the anomaly label pin if specifically flagged
+      if (isAnomaly) {
+        ctx.fillStyle = '#C94F4F';
+        ctx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('ANOMALY', x, y - 10);
       }
+    });
 
-      const offsetNext = impVal ? 62 : 48;
-      ctx.fillStyle = '#2563EB';
-      ctx.fillText(`Humidity: ${hVal}%`, cardX + 10, cardY + offsetNext);
+    // 7. Timeline X-Axis Labels (Display last, middle, first)
+    if (this.buffer.timestamps && this.buffer.timestamps.length > 0) {
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
-      ctx.fillStyle = '#C98A1C';
-      ctx.fillText(`Pressure: ${pVal} hPa`, cardX + 105, cardY + offsetNext);
+      const stamps = this.buffer.timestamps;
+      const mid = Math.floor(stamps.length / 2);
 
-      ctx.restore();
+      ctx.textAlign = 'left';
+      ctx.fillText(stamps[0] || '', padLeft, h - 10);
+
+      ctx.textAlign = 'center';
+      ctx.fillText(stamps[mid] || '', padLeft + plotW / 2, h - 10);
+
+      ctx.textAlign = 'right';
+      ctx.fillText(stamps[stamps.length - 1] || '', w - padRight, h - 10);
+    }
+  }
+
+  destroy() {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
     }
   }
 }
 
-// Global Singleton Initialization
+// Global Chart Singleton Setup
 window.UnifiedComparativeChartInstance = null;
 
-window.initUnifiedChart = function() {
-  const canvas = document.getElementById('unified-comparative-canvas');
-  if (!canvas) return null;
-
+window.initUnifiedChart = function () {
   if (!window.UnifiedComparativeChartInstance) {
     window.UnifiedComparativeChartInstance = new UnifiedComparativeChart('unified-comparative-canvas');
   }
-
-  if (window.OperationalStreamEngineInstance) {
-    const stationId = window.OperationalStreamEngineInstance.activeStationId || 'AWS-JPR-04';
-    const buffer = window.OperationalStreamEngineInstance.stationBuffers?.[stationId];
-    if (buffer) {
-      window.UnifiedComparativeChartInstance.updateData(buffer);
-    }
-  }
-
   return window.UnifiedComparativeChartInstance;
 };
 
-// Auto-bootstrap
+// Bootstrap when DOM ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => window.initUnifiedChart());
 } else {
