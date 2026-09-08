@@ -1,726 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SkyGuard AI — Weather Data Trust Intelligence (PS 73)</title>
-  <meta name="description" content="AI/ML-based weather data trust intelligence and anomaly detection platform for Automatic Weather Stations (AWS). Distinguishing genuine weather events from sensor faults.">
-
-  <!-- Inter & JetBrains Mono Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Core Professional B2B Stylesheet with cache bust -->
-  <link rel="stylesheet" href="css/styles.css?v=3">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyGuard AI — Weather Data Trust Intelligence Platform</title>
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/views.css" />
 </head>
 <body>
+  <!-- Top Application Bar -->
+  <header class="app-header">
+    <div class="header-branding">
+      <div class="brand-symbol">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-title">SkyGuard AI</span>
+        <span class="brand-subtitle">Weather Data Trust Intelligence • PS 73</span>
+      </div>
+    </div>
 
-  <!-- Subtle Atmospheric Ombre Background -->
-  <div class="atmospheric-bg"></div>
+    <!-- Header Right Controls -->
+    <div class="header-right-actions">
+      <button id="cursor-toggle-btn" class="header-util-btn" title="Toggle Precision Reticle">Custom Cursor: Off</button>
+    </div>
+  </header>
 
-  <!-- Scientific Mercury Thermometer Cursor Canvas Layer -->
-  <canvas id="cursor-canvas"></canvas>
+  <!-- Primary Navigation Tabs -->
+  <nav class="primary-nav">
+    <button class="nav-tab active" data-view="command-center">Command Center</button>
+    <button class="nav-tab" data-view="live-network">Live Network</button>
+    <button class="nav-tab" data-view="investigate">Investigate <span class="tab-chip critical">01 Critical</span></button>
+    <button class="nav-tab" data-view="sensor-health">Sensor Health</button>
+    <button class="nav-tab" data-view="maintenance">Maintenance <span class="tab-chip">3</span></button>
+    <button class="nav-tab" data-view="data-trust-log">Data Trust Log</button>
+  </nav>
 
-  <div class="app-layout">
+  <!-- Main View Container -->
+  <main class="app-main-container">
 
-    <!-- ==========================================================================
-         TOP APPLICATION BAR & NAVIGATION
-         ========================================================================== -->
-    <header class="app-header">
-      <div class="header-top-bar">
-        <!-- Brand & Positioning -->
-        <a href="#command-center" class="brand-section">
-          <div class="brand-shield-mark">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              <path d="M12 9v4"/>
-              <path d="M12 16h.01"/>
-            </svg>
-          </div>
-          <div class="brand-title-wrap">
-            <div class="brand-name">SKYGUARD <span>AI</span></div>
-            <div class="brand-tagline">Weather Data Trust Intelligence • PS 73</div>
-          </div>
-        </a>
+    <!-- VIEW 1: COMMAND CENTER -->
+    <section id="view-command-center" class="app-view active">
 
-        <!-- Quick Mesonet Telemetry Readout -->
-        <div class="header-quick-telemetry">
-          <div class="telemetry-indicator">
-            <span class="status-dot dot-trusted"></span>
-            <span>Mesonet Status: <strong>24 Nodes Online</strong></span>
-          </div>
-          <div class="telemetry-indicator">
-            <span>Overall Trust: <strong>94.8%</strong></span>
-          </div>
-          <div class="telemetry-indicator">
-            <span style="color:var(--status-critical); font-weight:700">● 1 Critical Anomaly Flagged</span>
-          </div>
+      <!-- Evaluator Interactive Scenario Sandbox -->
+      <div class="sandbox-action-bar">
+        <div class="sandbox-label">
+          <span class="pulse-dot"></span>
+          <strong>EVALUATOR SANDBOX:</strong> Verify how SkyGuard AI distinguishes genuine weather from hardware failure:
         </div>
-
-        <!-- Header Actions -->
-        <div class="header-actions">
-          <button id="btn-toggle-cursor-mode" class="btn-control" title="Toggle minimal scientific cursor">
-            Custom Cursor: On
-          </button>
+        <div class="sandbox-buttons">
+          <button class="btn-scenario" data-scenario="normal">✓ Normal Weather</button>
+          <button class="btn-scenario" data-scenario="storm">☔ Genuine Weather Event (Front)</button>
+          <button class="btn-scenario active" data-scenario="failure">⚡ Sensor Failure (55.2°C Spike)</button>
         </div>
       </div>
 
-      <!-- Domain Navigation Strip (6 Enterprise Workflows) -->
-      <nav class="header-nav-strip">
-        <div class="nav-tabs-container">
-          <button class="nav-tab-btn active" data-view="command-center">
-            <span>Command Center</span>
-          </button>
-          <button class="nav-tab-btn" data-view="live-network">
-            <span>Live Network</span>
-          </button>
-          <button class="nav-tab-btn" data-view="investigate">
-            <span>Investigate</span>
-            <span class="tab-badge">01 Critical</span>
-          </button>
-          <button class="nav-tab-btn" data-view="sensor-health">
-            <span>Sensor Health</span>
-          </button>
-          <button class="nav-tab-btn" data-view="maintenance">
-            <span>Maintenance</span>
-            <span style="font-size:0.7rem; font-weight:700; color:var(--text-tertiary)">(3)</span>
-          </button>
-          <button class="nav-tab-btn" data-view="data-trust-log">
-            <span>Data Trust Log</span>
-          </button>
+      <!-- Trust Score & High-Level KPIs -->
+      <div class="command-kpi-row">
+        <div class="kpi-card-trust">
+          <div class="trust-metric-header">
+            <span class="trust-metric-label">NETWORK DATA TRUST SCORE</span>
+            <div id="cmd-trust-score" class="trust-score-val">92 <span>/ 100</span></div>
+          </div>
+          <div class="trust-progress-track">
+            <div id="cmd-trust-progress-bar" class="trust-progress-fill" style="width: 92%;"></div>
+          </div>
+          <div class="trust-meta-caption">
+            Based on live sensor reliability, anomaly activity, data continuity, and network consistency across 24 mesonet nodes.
+          </div>
         </div>
-      </nav>
-    </header>
 
-    <!-- ==========================================================================
-         MAIN OPERATIONAL WORKSPACE
-         ========================================================================== -->
-    <main class="view-wrapper">
-
-      <!-- UNIQUE DEMO FEATURE: TEST THE AI (SCENARIO SIMULATOR) -->
-      <div class="simulation-bar-banner">
-        <div style="display:flex; align-items:center; gap:8px">
-          <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--brand-teal)">
-            ● Evaluator Sandbox:
-          </span>
-          <span style="font-size:0.8rem; color:var(--text-secondary)">
-            Verify how SkyGuard AI distinguishes genuine weather from hardware failure:
-          </span>
+        <div class="kpi-stat-card">
+          <span class="kpi-stat-val" id="stat-active-stations">24</span>
+          <span class="kpi-stat-label">Active Stations</span>
         </div>
-        <div class="sim-btn-group">
-          <button id="sim-btn-normal" class="sim-btn">
-            ✓ Normal Weather
-          </button>
-          <button id="sim-btn-storm" class="sim-btn">
-            ⛈️ Genuine Weather Event (Front)
-          </button>
-          <button id="sim-btn-failure" class="sim-btn active-sim">
-            ⚡ Sensor Failure (55.2°C Spike)
-          </button>
+
+        <div class="kpi-stat-card">
+          <span class="kpi-stat-val" id="stat-monitored-sensors">72</span>
+          <span class="kpi-stat-label">Monitored Sensors</span>
+        </div>
+
+        <div class="kpi-stat-card critical">
+          <span class="kpi-stat-val" id="stat-require-attention">03</span>
+          <span class="kpi-stat-label">Require Attention</span>
+        </div>
+
+        <div class="kpi-stat-card">
+          <span class="kpi-stat-val" id="stat-trusted-data">98.2%</span>
+          <span class="kpi-stat-label">Trusted Data</span>
         </div>
       </div>
 
-      <!-- ======================================================================
-            PAGE 1: COMMAND CENTER
-            "What needs attention right now?"
-            ====================================================================== -->
-      <section id="view-command-center" class="view-section active-view">
-        <!-- Top Network Trust & Operational Summary -->
-        <div class="network-trust-banner">
-          <!-- Left: Prominent Horizontal Network Trust Score -->
-          <div class="trust-metric-col">
-            <div class="trust-metric-header">
-              <span class="trust-metric-label">Network Data Trust Score</span>
-              <div id="cmd-trust-score" class="trust-score-val">94.8 <span>/ 100</span></div>
+      <!-- Live Stream Workspace: Chart & Attention Queue -->
+      <div class="command-workspace-grid">
+        
+        <!-- Left: Comparative Telemetry Chart Panel -->
+        <div class="chart-panel-card">
+          <div class="chart-panel-header">
+            <div class="chart-legend">
+              <span class="legend-item"><span class="legend-color dot-temp"></span> Temperature (°C)</span>
+              <span class="legend-item"><span class="legend-color dot-hum"></span> Humidity (%)</span>
+              <span class="legend-item"><span class="legend-color dot-press"></span> Pressure (hPa)</span>
+              <span class="legend-item"><span class="legend-color dot-imputed"></span> — AI Imputed Value</span>
             </div>
-            <div class="trust-progress-track">
-              <div id="cmd-trust-bar" class="trust-progress-fill" style="width: 94.8%"></div>
+            <div class="chart-timeframe-controls">
+              <button class="time-btn active" data-range="3h">3 Hour</button>
+              <button class="time-btn" data-range="6h">6 Hours</button>
+              <button class="time-btn" data-range="24h">24 Hours</button>
+              <button class="time-btn" data-range="7d">7 Days</button>
             </div>
-            <p class="trust-metric-note">
-              Based on live sensor reliability, anomaly activity, data continuity, and network consistency across 24 mesonet nodes.
-            </p>
           </div>
 
-          <!-- Right: Compact Network Summary -->
-          <div class="network-summary-grid">
-            <div class="summary-stat-box">
-              <span class="summary-stat-num">24</span>
-              <span class="summary-stat-label">Active Stations</span>
-            </div>
-            <div class="summary-stat-box">
-              <span class="summary-stat-num">72</span>
-              <span class="summary-stat-label">Monitored Sensors</span>
-            </div>
-            <div class="summary-stat-box">
-              <span class="summary-stat-num" style="color:var(--status-critical)">03</span>
-              <span class="summary-stat-label">Require Attention</span>
-            </div>
-            <div class="summary-stat-box">
-              <span class="summary-stat-num" style="color:var(--status-trusted)">98.2%</span>
-              <span class="summary-stat-label">Trusted Data</span>
-            </div>
+          <div class="chart-canvas-wrapper" style="position: relative; width: 100%; height: 320px;">
+            <canvas id="unified-comparative-canvas"></canvas>
+          </div>
+
+          <div class="chart-panel-footer">
+            <span class="focal-station-text">Focal Station: <strong id="cmd-active-station-name">AWS-JPR-04 (Jaipur Semi-Arid Grid)</strong></span>
+            <span class="focal-alert-text" id="cmd-chart-alert-tag">• 1 Anomaly Flagged</span>
+            <span class="focal-envelope-note">Green Shaded Band: Expected Diurnal Envelope</span>
           </div>
         </div>
 
-        <!-- Main Command Grid: Unified Comparative Chart + AI Attention Queue -->
-        <div class="command-workspace-grid">
-          <!-- Unified Multi-Sensor Comparative Chart -->
-          <div class="chart-panel-card">
-            <div class="chart-panel-header">
-              <div class="chart-channel-toggles">
-                <div class="channel-tag">
-                  <span class="channel-dot temp"></span>
-                  <span>Temperature (°C)</span>
-                </div>
-                <div class="channel-tag">
-                  <span class="channel-dot hum"></span>
-                  <span>Humidity (%)</span>
-                </div>
-                <div class="channel-tag">
-                  <span class="channel-dot press"></span>
-                  <span>Pressure (hPa)</span>
-                </div>
-                <div class="channel-tag" style="margin-left:8px">
-                  <span style="display:inline-block; width:12px; height:2px; background:#2E9B73; border-top:2px dashed #2E9B73"></span>
-                  <span style="color:#2E9B73">AI Imputed Value</span>
-                </div>
-              </div>
-
-              <!-- Timeframe Group -->
-              <div class="timeframe-group">
-                <button class="timeframe-btn active">1 Hour</button>
-                <button class="timeframe-btn">6 Hours</button>
-                <button class="timeframe-btn">24 Hours</button>
-                <button class="timeframe-btn">7 Days</button>
-              </div>
+        <!-- Right: Real-time Attention Queue Panel -->
+        <div class="queue-panel-card">
+          <div class="queue-panel-header">
+            <div class="queue-title-wrap">
+              <h3 style="margin:0; font-size:14px; font-weight:700; color:#17201E;">Attention Queue <span class="badge" style="background:#FED7D7; color:#C94F4F; padding:2px 7px; border-radius:12px; font-size:11px; margin-left:6px;">3</span></h3>
             </div>
-
-            <!-- Canvas Container -->
-            <div class="unified-chart-wrap">
-              <canvas id="unified-comparative-canvas"></canvas>
-            </div>
-
-            <div class="chart-footer-meta">
-              <span>Focal Station: <strong>AWS-JPR-04 (Jaipur Semi-Arid Grid)</strong></span>
-              <span style="color:var(--status-critical); font-weight:600">● 1 Anomaly Flagged at 14:32:15</span>
-              <span>Green Shaded Band: Expected Diurnal Envelope</span>
-            </div>
+            <span class="queue-sort-caption" style="font-size:12px; color:#718096;">Prioritized by Risk</span>
           </div>
-
-          <!-- AI Attention Queue -->
-          <div class="queue-panel-card">
-            <div class="queue-header">
-              <div class="queue-title">
-                <span>AI Attention Queue</span>
-                <span class="tab-badge">3</span>
-              </div>
-              <span style="font-size:0.72rem; color:var(--text-secondary)">Prioritized by Risk</span>
-            </div>
-
-            <div id="cmd-attention-queue-list" class="queue-items-list">
-              <!-- Rendered dynamically by command-center.js -->
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ======================================================================
-            PAGE 2: LIVE NETWORK
-            "What is happening across all weather stations?"
-            ====================================================================== -->
-      <section id="view-live-network" class="view-section">
-        <div class="view-header-strip">
-          <div class="view-heading-group">
-            <h2 class="view-title">Mesonet Station Directory & Live Telemetry</h2>
-            <p class="view-subtitle">Real-time data trust, current sensor measurements, and spatial network connectivity.</p>
-          </div>
-          <div style="font-size:0.78rem; color:var(--text-secondary)">
-            Showing <strong>5 of 24</strong> Primary Grid Stations
+          <div id="cmd-triage-list" class="queue-items-container">
+            <!-- Dynamic Attention Cards generated via command-center.js -->
           </div>
         </div>
 
-        <div class="network-view-layout">
-          <!-- Station Directory Hybrid Table -->
-          <div class="network-table-card">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Station / Location</th>
-                  <th>Temperature</th>
-                  <th>Humidity</th>
-                  <th>Pressure</th>
-                  <th>Data Trust</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="network-directory-tbody">
-                <!-- Rendered dynamically by live-network.js -->
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Supporting Geographic Mesonet Context Map -->
-          <div class="network-map-card">
-            <div style="display:flex; align-items:center; justify-content:space-between">
-              <h3 style="font-size:0.92rem; font-weight:700">Mesonet Topology & Spatial Context</h3>
-              <span style="font-size:0.72rem; color:var(--text-secondary)">Click node to inspect</span>
-            </div>
-            <div class="map-stage-wrap">
-              <svg id="network-map-svg" viewBox="0 0 450 380"></svg>
-            </div>
-            <div style="font-size:0.72rem; color:var(--text-secondary); display:flex; justify-content:space-between">
-              <span>● Red: Anomaly Detected</span>
-              <span>● Amber: Drift / Attention</span>
-              <span>● Green: Nominal Trust</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ======================================================================
-            PAGE 3: INVESTIGATE (INCIDENT INVESTIGATION MODE)
-            "Why did the AI classify this reading as an anomaly?"
-            ====================================================================== -->
-      <section id="view-investigate" class="view-section">
-        <div class="view-header-strip">
-          <div class="view-heading-group">
-            <h2 class="view-title">Incident Investigation Mode</h2>
-            <p class="view-subtitle">Transparent multi-factor evidence decomposition and event replay for AWS-JPR-04.</p>
-          </div>
-          <button class="btn-control" onclick="window.AppRouter.switchView('command-center')">
-            ← Back to Command Center
-          </button>
-        </div>
-
-        <div class="investigate-layout">
-          <!-- Incident Header Banner -->
-          <div class="incident-header-banner">
-            <div class="incident-meta-col">
-              <div class="incident-tag-row">
-                <span class="trust-badge badge-critical">INCIDENT #INC-4402</span>
-                <span style="font-size:0.75rem; color:var(--text-secondary)">Occurred: <strong>14:32:18 IST</strong></span>
-              </div>
-              <h3 class="incident-title">Temperature Surge to 55.2°C Detected at AWS-JPR-04</h3>
-              <div class="incident-details-list">
-                <span>Station: <strong>AWS-JPR-04 (Jaipur Semi-Arid)</strong></span>
-                <span>Sensor: <strong>PT100 RTD Thermistor</strong></span>
-                <span>Observed Reading: <strong style="color:var(--status-critical)">55.2°C</strong></span>
-              </div>
-            </div>
-
-            <!-- AI Verdict Box -->
-            <div class="incident-verdict-col">
-              <span class="verdict-header">AI Verdict</span>
-              <div class="verdict-main">PROBABLE SENSOR ANOMALY</div>
-              <div class="verdict-sub">Confidence: <strong>98.4%</strong> • Severity: <strong>CRITICAL</strong></div>
-              <div class="verdict-sub">Root Cause: <strong>Sudden Sensor Spike (Thermistor / ADC Failure)</strong></div>
-            </div>
-          </div>
-
-          <!-- Raw vs Imputed (AI Estimated) Data Audit Card -->
-          <div class="imputation-audit-card">
-            <div class="impute-box">
-              <span class="impute-label">Raw Sensor Reading (Unfiltered)</span>
-              <div class="impute-val" style="color:var(--status-critical)">55.2°C</div>
-              <span style="font-size:0.72rem; color:var(--text-secondary)">Registered by data logger ADC</span>
-            </div>
-
-            <div class="impute-box">
-              <span class="impute-label">AI Estimated (Imputed) Value</span>
-              <div class="impute-val" style="color:var(--status-trusted)">25.4°C</div>
-              <span style="font-size:0.72rem; color:var(--status-trusted); font-weight:600">Estimation Confidence: 91%</span>
-            </div>
-
-            <div class="impute-note">
-              <strong>Data Integrity Audit Guarantee:</strong><br>
-              Original raw sensor reading is strictly preserved for meteorological audit and regulatory compliance. The AI imputed value is provided as an auxiliary stream for downstream Numerical Weather Prediction (NWP) model continuity.
-            </div>
-          </div>
-
-          <!-- Event Replay Interactive Scrubber -->
-          <div class="replay-scrubber-card">
-            <div class="replay-header">
-              <div style="display:flex; align-items:center; gap:8px">
-                <h4 style="font-size:0.95rem; font-weight:700">Incident Event Replay</h4>
-                <span style="font-size:0.72rem; color:var(--text-secondary)">Step through the exact sequence of readings</span>
-              </div>
-              <div class="replay-controls">
-                <button id="btn-replay-prev" class="btn-control">◀ Step Back</button>
-                <button id="btn-replay-play" class="btn-control btn-brand">▶ Replay Incident</button>
-                <button id="btn-replay-next" class="btn-control">Step Forward ▶</button>
-              </div>
-            </div>
-
-            <!-- Scrubber Steps -->
-            <div id="replay-steps-container" class="replay-timeline-steps">
-              <!-- Rendered dynamically by investigate.js -->
-            </div>
-
-            <div id="replay-step-note" style="font-size:0.78rem; color:var(--text-secondary); background:var(--bg-main); padding:8px 12px; border-radius:var(--radius-xs); border:1px solid var(--border-light)">
-              <!-- Step note populated dynamically -->
-            </div>
-          </div>
-
-          <!-- Ranked Evidence Stack & Reality Check -->
-          <div class="evidence-reality-grid">
-            <!-- Left: Ranked Evidence Stack -->
-            <div class="evidence-stack-card">
-              <div style="display:flex; align-items:center; justify-content:space-between">
-                <h4 style="font-size:0.95rem; font-weight:700">Why SkyGuard Flagged This (Ranked Evidence)</h4>
-                <span style="font-size:0.72rem; color:var(--text-secondary)">Ranked by Contribution</span>
-              </div>
-
-              <div class="evidence-list">
-                <!-- Evidence 01 -->
-                <div class="evidence-item">
-                  <div class="evidence-top">
-                    <span class="evidence-num-title">01 • Historical Baseline Deviation</span>
-                    <span class="trust-badge badge-critical">Impact: High</span>
-                  </div>
-                  <p class="evidence-desc">
-                    55.2°C is significantly outside the expected historical diurnal range. Expected seasonal range for this hour: <strong>22.0°C – 27.5°C</strong> (Z-Score: +9.8σ).
-                  </p>
-                </div>
-
-                <!-- Evidence 02 -->
-                <div class="evidence-item">
-                  <div class="evidence-top">
-                    <span class="evidence-num-title">02 • Temporal Deviation Rate</span>
-                    <span class="trust-badge badge-critical">Impact: High</span>
-                  </div>
-                  <p class="evidence-desc">
-                    The temperature increased by approximately 30°C within 15 seconds. Thermal inertia of ambient air physically forbids this rate of change without explosive combustion.
-                  </p>
-                </div>
-
-                <!-- Evidence 03 -->
-                <div class="evidence-item">
-                  <div class="evidence-top">
-                    <span class="evidence-num-title">03 • Cross-Sensor Consistency</span>
-                    <span class="trust-badge badge-critical">Impact: High</span>
-                  </div>
-                  <p class="evidence-desc">
-                    Relative humidity (44%) and atmospheric pressure (1008 hPa) do not support an extreme heat event. Clausius-Clapeyron saturation vapor pressure would require impossible dew points (&gt;44°C).
-                  </p>
-                </div>
-
-                <!-- Evidence 04 -->
-                <div class="evidence-item">
-                  <div class="evidence-top">
-                    <span class="evidence-num-title">04 • Nearby Station Comparison</span>
-                    <span class="trust-badge badge-critical">Impact: Very High</span>
-                  </div>
-                  <p class="evidence-desc">
-                    4 nearby mesonet stations within 15km remain between <strong>24.2°C and 25.8°C</strong>. An atmospheric heat event cannot be physically confined to a 10-meter footprint.
-                  </p>
-                </div>
-              </div>
-
-              <!-- Technical Details Collapsible Box -->
-              <div style="margin-top:4px">
-                <button id="btn-toggle-tech-details" class="btn-control" style="width:100%; justify-content:center">
-                  Show Advanced Technical Details (SHAP / Loss) ▼
-                </button>
-                <div id="tech-details-box" style="display:none; margin-top:10px; padding:12px; background:var(--bg-main); border:1px solid var(--border-light); border-radius:var(--radius-xs); font-size:0.75rem; font-family:var(--font-mono)">
-                  <div>• Model Architecture: Decision Tree Classifier (Pruned Depth=8)</div>
-                  <div>• Decision Boundary: Rate-of-change + Psychrometric Consistency Envelopes</div>
-                  <div>• Engineered Features: [TEMP_DIFF, TEMP_VARIANCE_5, TEMP_DEW_SPREAD, DRIFT_DEV]</div>
-                  <div>• Inference Mode: Local 3-Tier Edge Engine (/api/predict)</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Right: Reality Check Component -->
-            <div class="reality-check-card">
-              <div>
-                <h4 style="font-size:0.95rem; font-weight:700">Reality Check: Weather or Sensor Fault?</h4>
-                <p style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px">
-                  Side-by-side evidence balance evaluating whether the event matches physical nature.
-                </p>
-              </div>
-
-              <div class="reality-split-view">
-                <!-- Weather Side -->
-                <div class="reality-side-col weather-side">
-                  <span class="reality-col-title" style="color:var(--status-trusted)">Genuine Weather Event</span>
-                  <ul class="reality-check-list">
-                    <li>✕ Nearby stations confirm change</li>
-                    <li>✕ Pressure supports event</li>
-                    <li>✕ Multiple parameters consistent</li>
-                    <li>✕ Realistic temporal transition</li>
-                  </ul>
-                  <div style="margin-top:auto; font-size:0.72rem; color:var(--status-trusted); font-weight:700">
-                    Evidence Support: 4%
-                  </div>
-                </div>
-
-                <!-- Anomaly Side -->
-                <div class="reality-side-col anomaly-side">
-                  <span class="reality-col-title" style="color:var(--status-critical)">Sensor Anomaly</span>
-                  <ul class="reality-check-list">
-                    <li>✓ Isolated sensor spike</li>
-                    <li>✓ Unrealistic rate of change</li>
-                    <li>✓ Other sensors disagree</li>
-                    <li>✓ Historical baseline violated</li>
-                  </ul>
-                  <div style="margin-top:auto; font-size:0.72rem; color:var(--status-critical); font-weight:700">
-                    Evidence Support: 96%
-                  </div>
-                </div>
-              </div>
-
-              <!-- AI Verdict Summary -->
-              <div style="background:var(--bg-main); padding:12px; border-radius:var(--radius-xs); border:1px solid var(--border-light)">
-                <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; color:var(--text-secondary)">Final System Recommendation</div>
-                <div style="font-size:0.85rem; font-weight:700; color:var(--text-primary); margin-top:2px">
-                  Do not trigger heat advisory. Dispatch P1 maintenance order to inspect AWS-JPR-04.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ======================================================================
-            PAGE 4: SENSOR HEALTH
-            "Which sensors are degrading?"
-            ====================================================================== -->
-      <section id="view-sensor-health" class="view-section">
-        <div class="view-header-strip">
-          <div class="view-heading-group">
-            <h2 class="view-title">Sensor Health & Lifecycle Analytics</h2>
-            <p class="view-subtitle">Continuous acoustic, resistive, and capacitive drift analysis across mesonet transducers.</p>
-          </div>
-        </div>
-
-        <div class="sensor-health-layout">
-          <!-- 3 Sensor Health Cards -->
-          <div class="sensor-health-overview-grid">
-            <!-- Card 1 -->
-            <div class="sensor-health-tile">
-              <div class="sensor-tile-top">
-                <span class="sensor-tile-title">Temperature (PT100 RTD)</span>
-                <span class="trust-badge badge-critical">Health: 82 / 100</span>
-              </div>
-              <div class="sensor-health-score-row">
-                <div class="health-large-score" style="color:var(--status-critical)">82%</div>
-                <span style="font-size:0.75rem; color:var(--text-secondary)">Degradation Detected</span>
-              </div>
-              <div class="health-bar-track">
-                <div class="health-bar-fill" style="width:82%; background:var(--status-critical)"></div>
-              </div>
-              <div class="sensor-metrics-list">
-                <div><span>Drift Velocity:</span> <strong>+0.4°C / mo</strong></div>
-                <div><span>Noise Floor:</span> <strong>Elevated (2.4σ)</strong></div>
-                <div><span>Data Continuity:</span> <strong>99.4%</strong></div>
-                <div><span>Spike Frequency:</span> <strong>4 in 7 days</strong></div>
-              </div>
-            </div>
-
-            <!-- Card 2 -->
-            <div class="sensor-health-tile">
-              <div class="sensor-tile-top">
-                <span class="sensor-tile-title">Humidity (Capacitive Polymer)</span>
-                <span class="trust-badge badge-attention">Health: 74 / 100</span>
-              </div>
-              <div class="sensor-health-score-row">
-                <div class="health-large-score" style="color:var(--status-attention)">74%</div>
-                <span style="font-size:0.75rem; color:var(--text-secondary)">Calibration Drift</span>
-              </div>
-              <div class="health-bar-track">
-                <div class="health-bar-fill" style="width:74%; background:var(--status-attention)"></div>
-              </div>
-              <div class="sensor-metrics-list">
-                <div><span>Drift Velocity:</span> <strong>+1.8% / mo</strong></div>
-                <div><span>Noise Floor:</span> <strong>Nominal</strong></div>
-                <div><span>Data Continuity:</span> <strong>98.8%</strong></div>
-                <div><span>Calibration Window:</span> <strong>Within 7 days</strong></div>
-              </div>
-            </div>
-
-            <!-- Card 3 -->
-            <div class="sensor-health-tile">
-              <div class="sensor-tile-top">
-                <span class="sensor-tile-title">Pressure (Piezoresistive Baro)</span>
-                <span class="trust-badge badge-trusted">Health: 91 / 100</span>
-              </div>
-              <div class="sensor-health-score-row">
-                <div class="health-large-score" style="color:var(--status-trusted)">91%</div>
-                <span style="font-size:0.75rem; color:var(--text-secondary)">Nominal State</span>
-              </div>
-              <div class="health-bar-track">
-                <div class="health-bar-fill" style="width:91%; background:var(--status-trusted)"></div>
-              </div>
-              <div class="sensor-metrics-list">
-                <div><span>Drift Velocity:</span> <strong>0.02 hPa / mo</strong></div>
-                <div><span>Noise Floor:</span> <strong>Low (0.3σ)</strong></div>
-                <div><span>Data Continuity:</span> <strong>99.9%</strong></div>
-                <div><span>Hysteresis:</span> <strong>None Detected</strong></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 90-Day Degradation Timeline -->
-          <div class="lifecycle-timeline-card">
-            <div>
-              <h3 style="font-size:1.05rem; font-weight:700">Temperature Sensor 90-Day Degradation Timeline (AWS-JPR-04)</h3>
-              <p style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px">
-                Demonstrating gradual degradation from baseline stability to the critical spike event.
-              </p>
-            </div>
-
-            <div class="timeline-horizontal-progression">
-              <div class="timeline-node-card">
-                <span class="node-day-label">90 Days Ago</span>
-                <span class="node-state-title" style="color:var(--status-trusted)">Stable Baseline</span>
-                <p class="node-state-desc">Sensor operating at 99% health. Normal Gaussian noise floor.</p>
-              </div>
-
-              <div class="timeline-node-card">
-                <span class="node-day-label">30 Days Ago</span>
-                <span class="node-state-title" style="color:var(--status-attention)">Minor Noise Increase</span>
-                <p class="node-state-desc">High-frequency jitter observed. Variance widened by +0.4°C.</p>
-              </div>
-
-              <div class="timeline-node-card">
-                <span class="node-day-label">7 Days Ago</span>
-                <span class="node-state-title" style="color:var(--status-attention)">Repeated Micro-Spikes</span>
-                <p class="node-state-desc">3 brief transient impulse spikes logged during solar heating peak.</p>
-              </div>
-
-              <div class="timeline-node-card" style="border-color:var(--status-critical-border); background:var(--status-critical-bg)">
-                <span class="node-day-label" style="color:var(--status-critical)">Today (14:32)</span>
-                <span class="node-state-title" style="color:var(--status-critical)">Critical Spike (55.2°C)</span>
-                <p class="node-state-desc">Full circuit fault or thermistor short. P1 ticket dispatched.</p>
-              </div>
-
-              <div class="timeline-node-card" style="border-color:var(--brand-teal)">
-                <span class="node-day-label" style="color:var(--brand-teal)">AI Forecast</span>
-                <span class="node-state-title" style="color:var(--brand-teal)">Failure Window</span>
-                <p class="node-state-desc">Total telemetry loss forecasted within 7 days without field service.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ======================================================================
-            PAGE 5: MAINTENANCE
-            "What should we do next?"
-            ====================================================================== -->
-      <section id="view-maintenance" class="view-section">
-        <div class="view-header-strip">
-          <div class="view-heading-group">
-            <h2 class="view-title">Field Engineering & Maintenance Queue</h2>
-            <p class="view-subtitle">Prioritized operational work orders based on AI anomaly severity and component degradation.</p>
-          </div>
-          <div style="font-size:0.78rem; color:var(--text-secondary)">
-            Active Work Orders: <strong>3 Pending</strong>
-          </div>
-        </div>
-
-        <div class="maintenance-layout">
-          <div class="maintenance-table-card">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Priority</th>
-                  <th>Station</th>
-                  <th>Sensor Transducer</th>
-                  <th>Detected Issue</th>
-                  <th>AI Confidence</th>
-                  <th>Recommended Operational Action</th>
-                  <th>Urgency</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="maintenance-tbody">
-                <!-- Rendered dynamically by maintenance.js -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- ======================================================================
-            PAGE 6: DATA TRUST LOG
-            Traceable event history
-            ====================================================================== -->
-      <section id="view-data-trust-log" class="view-section">
-        <div class="view-header-strip">
-          <div class="view-heading-group">
-            <h2 class="view-title">Data Trust Audit & Traceability Log</h2>
-            <p class="view-subtitle">Immutable log recording every sensor measurement, trust score, and AI classification decision.</p>
-          </div>
-          <button id="btn-export-log-csv" class="btn-control btn-brand">
-            Export Audit Log (CSV)
-          </button>
-        </div>
-
-        <div class="trust-log-layout">
-          <div class="trust-log-filter-bar">
-            <input type="text" id="trust-log-search" class="search-input-box" placeholder="Search by station, sensor, or status...">
-            <span style="font-size:0.75rem; color:var(--text-secondary)">Showing latest 5 verification cycles</span>
-          </div>
-
-          <div class="maintenance-table-card">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>Station ID</th>
-                  <th>Parameter</th>
-                  <th>Raw Reading</th>
-                  <th>AI Imputed</th>
-                  <th>Data Trust</th>
-                  <th>AI Decision</th>
-                  <th>Confidence</th>
-                  <th>Action Required</th>
-                </tr>
-              </thead>
-              <tbody id="trust-log-tbody">
-                <!-- Rendered dynamically by data-trust-log.js -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-    </main>
-
-    <!-- ==========================================================================
-         ENTERPRISE FOOTER
-         ========================================================================== -->
-    <footer class="app-footer">
-      <div class="footer-inner">
-        <div>
-          <strong>SkyGuard AI</strong> — <em>From Weather Data to Trusted Decisions.</em>
-          <span style="margin: 0 8px">•</span>
-          <span>Continuously determining whether your weather station is measuring reality — or reporting a problem.</span>
-        </div>
-        <div>
-          <span>PS 73: AI/ML Anomaly Detection for AWS</span>
-          <span style="margin: 0 8px">•</span>
-          <span>© 2026 SkyGuard AI Platform</span>
-        </div>
       </div>
-    </footer>
+    </section>
 
-  </div>
+    <!-- Placeholder Stubs for Other Platform Views -->
+    <section id="view-live-network" class="app-view"></section>
+    <section id="view-investigate" class="app-view"></section>
+    <section id="view-sensor-health" class="app-view"></section>
+    <section id="view-maintenance" class="app-view"></section>
+    <section id="view-data-trust-log" class="app-view"></section>
+  </main>
 
-  <!-- Component Scripts (Busts Browser Cache with ?v=30) -->
-  <script src="js/cursor.js?v=30"></script>
-  <script src="js/ai-detector.js?v=30"></script>
-  <script src="js/stream-engine.js?v=30"></script>
-  <script src="js/charts.js?v=30"></script>
-  <script src="js/components/command-center.js?v=30"></script>
-  <script src="js/components/live-network.js?v=30"></script>
-  <script src="js/components/investigate.js?v=30"></script>
-  <script src="js/components/sensor-health.js?v=30"></script>
-  <script src="js/components/maintenance.js?v=30"></script>
-  <script src="js/components/data-trust-log.js?v=30"></script>
-  <script src="js/app.js?v=30"></script>
+  <!-- Core Scripts in Order -->
+  <script src="js/charts.js"></script>
+  <script src="js/stream-engine.js"></script>
+  <script src="js/components/command-center.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
