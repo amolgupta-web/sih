@@ -1,228 +1,126 @@
 /**
- * SkyGuard AI — Operational Real-Time Telemetry Stream Engine
- * Simulates high-frequency weather station sensor network telemetry,
- * rolling data buffers (30 pts), multi-station switching (Jaipur, Delhi, Chennai),
- * and dynamic scenario injection (Normal vs Failure).
+ * SkyGuard AI — Operational Telemetry Stream Engine
+ * Simulates real-time telemetry generation with organic diurnal variance,
+ * micro-fluctuations, and station-specific anomaly characteristics.
  */
 
 class OperationalStreamEngine {
   constructor() {
-    this.subscribers = [];
-    this.timer = null;
-    this.intervalMs = 2500;
-    this.activeScenario = 'failure'; // Default to failure for anomaly showcase
-    this.activeStationId = 'AWS-JPR-04';
-
-    // Station Network Registry
-    this.stations = {
-      'AWS-JPR-04': {
-        id: 'AWS-JPR-04',
-        name: 'Jaipur (Semi-Arid Grid)',
-        region: 'Northwest Arid',
-        baseTemp: 26.2,
-        baseHum: 44.0,
-        basePress: 1008.2,
-        trust: 82
-      },
-      'AWS-DEL-07': {
-        id: 'AWS-DEL-07',
-        name: 'Delhi (Urban Heat Corridor)',
-        region: 'NCR Urban Mesh',
-        baseTemp: 29.5,
-        baseHum: 58.0,
-        basePress: 1005.4,
-        trust: 89
-      },
-      'AWS-CHE-12': {
-        id: 'AWS-CHE-12',
-        name: 'Chennai (Coastal Marine Mesh)',
-        region: 'Coromandel Coast',
-        baseTemp: 31.8,
-        baseHum: 78.5,
-        basePress: 1011.0,
-        trust: 94
-      }
+    this.activeStation = 'AWS-JPR-04';
+    this.buffers = {
+      'AWS-JPR-04': this.generateInitialBuffer('AWS-JPR-04'),
+      'AWS-DEL-07': this.generateInitialBuffer('AWS-DEL-07'),
+      'AWS-CHE-12': this.generateInitialBuffer('AWS-CHE-12')
     };
 
-    // Initialize 30-point rolling buffers per station
-    this.stationBuffers = {};
-    Object.keys(this.stations).forEach((stId) => {
-      this.stationBuffers[stId] = this.createInitialBuffer(stId);
-    });
-
-    this.start();
+    // Start background live pulse stream
+    this.startLiveStream();
   }
 
-  createInitialBuffer(stationId) {
-    const st = this.stations[stationId];
+  generateInitialBuffer(stationId) {
+    const data = [];
+    const count = 20;
     const now = Date.now();
-    const timestamps = [];
-    const temp = [];
-    const humidity = [];
-    const pressure = [];
-    const anomalies = [];
 
-    for (let i = 29; i >= 0; i--) {
-      const time = new Date(now - i * this.intervalMs);
-      timestamps.push(time.toLocaleTimeString());
+    for (let i = count - 1; i >= 0; i--) {
+      const time = new Date(now - i * 4000);
+      const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-      const noiseT = (Math.random() - 0.5) * 0.4;
-      const noiseH = (Math.random() - 0.5) * 0.8;
-      const noiseP = (Math.random() - 0.5) * 0.2;
+      let temp = 25.0;
+      let hum = 44.0;
+      let press = 1008.0;
+      let isAnomaly = false;
 
-      // Inject anomaly jump on Jaipur in failure scenario
-      if (stationId === 'AWS-JPR-04' && this.activeScenario === 'failure' && i <= 6) {
-        temp.push(Number((54.5 + noiseT * 2).toFixed(1)));
-        if (i === 6) anomalies.push(29 - i);
-      } else {
-        temp.push(Number((st.baseTemp + noiseT).toFixed(1)));
+      // Organic wave variations using sine math
+      const wave = Math.sin(i * 0.4) * 0.6;
+
+      if (stationId === 'AWS-JPR-04') {
+        temp = 25.2 + wave + (i === 0 ? 30.0 : 0); // Active spike at the live edge
+        hum = 43.5 - wave;
+        press = 1008.2 + (wave * 0.2);
+        isAnomaly = i === 0;
+      } else if (stationId === 'AWS-DEL-07') {
+        temp = 28.4 + (wave * 0.8);
+        hum = 58.0 + (wave * 1.5);
+        press = 1012.1 + (wave * 0.3);
+      } else if (stationId === 'AWS-CHE-12') {
+        temp = 31.8 + (wave * 0.5);
+        hum = 78.0 + (wave * 0.8);
+        press = 1011.2 + (wave * 0.1);
       }
 
-      humidity.push(Number((st.baseHum + noiseH).toFixed(1)));
-      pressure.push(Number((st.basePress + noiseP).toFixed(1)));
+      data.push({
+        timeStr,
+        temperature: parseFloat(temp.toFixed(2)),
+        humidity: parseFloat(hum.toFixed(1)),
+        pressure: parseFloat(press.toFixed(1)),
+        isAnomaly
+      });
     }
 
-    return { timestamps, temp, humidity, pressure, anomalies };
-  }
-
-  subscribe(callback) {
-    this.subscribers.push(callback);
-    return () => {
-      this.subscribers = this.subscribers.filter((cb) => cb !== callback);
-    };
-  }
-
-  broadcast(payload) {
-    this.subscribers.forEach((cb) => {
-      try {
-        cb(payload);
-      } catch (err) {
-        console.error('Error in stream subscriber:', err);
-      }
-    });
-  }
-
-  setScenario(scenario) {
-    if (this.activeScenario === scenario) return;
-    this.activeScenario = scenario;
-
-    // Reset Jaipur buffer to match scenario
-    this.stationBuffers['AWS-JPR-04'] = this.createInitialBuffer('AWS-JPR-04');
-    this.tick();
+    return data;
   }
 
   setStation(stationId) {
-    if (!this.stations[stationId]) return;
-    this.activeStationId = stationId;
-
-    const buffer = this.stationBuffers[stationId];
-    if (window.UnifiedComparativeChartInstance && buffer) {
-      window.UnifiedComparativeChartInstance.updateData(buffer);
+    if (this.buffers[stationId]) {
+      this.activeStation = stationId;
+      if (window.UnifiedComparativeChartInstance) {
+        window.UnifiedComparativeChartInstance.render();
+      }
     }
-
-    this.tick();
   }
 
-  tick() {
-    const nowStr = new Date().toLocaleTimeString();
+  getBuffer(stationId) {
+    return this.buffers[stationId] || this.buffers['AWS-JPR-04'];
+  }
 
-    // Advance rolling buffer for every station
-    Object.keys(this.stations).forEach((stId) => {
-      const st = this.stations[stId];
-      const buffer = this.stationBuffers[stId];
+  startLiveStream() {
+    setInterval(() => {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-      const noiseT = (Math.random() - 0.5) * 0.4;
-      const noiseH = (Math.random() - 0.5) * 0.8;
-      const noiseP = (Math.random() - 0.5) * 0.2;
+      // Push subtle live variance to all station buffers
+      Object.keys(this.buffers).forEach((stId) => {
+        const buf = this.buffers[stId];
+        const last = buf[buf.length - 1] || { temperature: 25, humidity: 50, pressure: 1010 };
+        
+        // Random micro-jitter (-0.2 to +0.2)
+        const jitter = (Math.random() - 0.5) * 0.4;
 
-      let nextTemp;
-      const isJaipurFailure = stId === 'AWS-JPR-04' && this.activeScenario === 'failure';
+        let newTemp = last.temperature;
+        if (stId === 'AWS-JPR-04') {
+          // Keep Jaipur pinned at the anomaly state or mild jitter around baseline if triaged
+          newTemp = 55.2 + (Math.random() - 0.5) * 0.3;
+        } else if (stId === 'AWS-DEL-07') {
+          newTemp = 28.4 + jitter;
+        } else {
+          newTemp = 31.8 + jitter;
+        }
 
-      if (isJaipurFailure) {
-        // Dynamic oscillating failure curve around 55.2°C
-        nextTemp = Number((54.0 + Math.sin(Date.now() / 800) * 1.5 + noiseT).toFixed(1));
-      } else {
-        nextTemp = Number((st.baseTemp + noiseT).toFixed(1));
-      }
+        buf.push({
+          timeStr,
+          temperature: parseFloat(newTemp.toFixed(2)),
+          humidity: parseFloat((last.humidity + jitter * 0.5).toFixed(1)),
+          pressure: parseFloat((last.pressure + jitter * 0.1).toFixed(1)),
+          isAnomaly: stId === 'AWS-JPR-04'
+        });
 
-      const nextHum = Number((st.baseHum + noiseH).toFixed(1));
-      const nextPress = Number((st.basePress + noiseP).toFixed(1));
+        if (buf.length > 25) {
+          buf.shift();
+        }
+      });
 
-      buffer.timestamps.push(nowStr);
-      buffer.temp.push(nextTemp);
-      buffer.humidity.push(nextHum);
-      buffer.pressure.push(nextPress);
-
-      // Shift window to preserve 30 points
-      if (buffer.timestamps.length > 30) {
-        buffer.timestamps.shift();
-        buffer.temp.shift();
-        buffer.humidity.shift();
-        buffer.pressure.shift();
-        buffer.anomalies = buffer.anomalies
-          .map((idx) => idx - 1)
-          .filter((idx) => idx >= 0);
-      }
-
-      // Anomaly detection pin throttle
-      if (isJaipurFailure) {
-        const currIdx = buffer.temp.length - 1;
-        const prevTemp = buffer.temp[currIdx - 1] ?? buffer.temp[currIdx];
-        if (Math.abs(nextTemp - prevTemp) >= 4.0 || buffer.anomalies.length === 0) {
-          if (!buffer.anomalies.includes(currIdx)) {
-            buffer.anomalies.push(currIdx);
-          }
+      // Redraw active chart if on command center
+      if (window.AppRouter && window.AppRouter.currentView === 'command-center') {
+        if (window.UnifiedComparativeChartInstance) {
+          window.UnifiedComparativeChartInstance.render();
         }
       }
-    });
-
-    const activeSt = this.stations[this.activeStationId];
-    const activeBuffer = this.stationBuffers[this.activeStationId];
-    const isAnomaly = this.activeStationId === 'AWS-JPR-04' && this.activeScenario === 'failure';
-
-    // Direct redraw of active chart
-    if (window.UnifiedComparativeChartInstance && activeBuffer) {
-      window.UnifiedComparativeChartInstance.updateData(activeBuffer);
-    }
-
-    // Broadcast state payload
-    this.broadcast({
-      stationId: this.activeStationId,
-      stationName: activeSt.name,
-      reading: {
-        stationId: this.activeStationId,
-        stationName: activeSt.name,
-        temp: activeBuffer.temp[activeBuffer.temp.length - 1],
-        humidity: activeBuffer.humidity[activeBuffer.humidity.length - 1],
-        pressure: activeBuffer.pressure[activeBuffer.pressure.length - 1]
-      },
-      analysis: {
-        isAnomaly,
-        confidence: isAnomaly ? 0.984 : 0.04,
-        imputedVal: 25.4,
-        trustScore: isAnomaly ? 82 : activeSt.trust
-      },
-      scenario: this.activeScenario,
-      networkTrust: isAnomaly ? 86 : 96,
-      buffer: activeBuffer,
-      stations: this.stations
-    });
-  }
-
-  start() {
-    if (this.timer) clearInterval(this.timer);
-    this.timer = setInterval(() => this.tick(), this.intervalMs);
-  }
-
-  stop() {
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = null;
-    }
+    }, 3500); // Pulse every 3.5 seconds
   }
 }
 
-// Global Singleton Instance
+// Global Singleton Setup
 window.OperationalStreamEngineInstance = null;
 
 window.initStreamEngine = function () {
