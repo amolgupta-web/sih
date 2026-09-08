@@ -26,9 +26,6 @@ class InvestigateController {
         imputedVal: '25.4°C',
         imputeConf: 'Estimation Confidence: 91%',
         chartTitle: 'Incident Forensic Waveform & Baseline Envelope (Jaipur)',
-        weatherSupport: '4%',
-        anomalySupport: '96%',
-        recommendation: 'Do not trigger heat advisory. Dispatch P1 maintenance order to inspect AWS-JPR-04.',
         evidence: [
           {
             title: '01 • Historical Baseline Deviation',
@@ -69,9 +66,6 @@ class InvestigateController {
         imputedVal: '13.8 V (Nominal)',
         imputeConf: 'Estimation Confidence: 85%',
         chartTitle: 'Incident Forensic Waveform & Baseline Envelope (Delhi)',
-        weatherSupport: '12%',
-        anomalySupport: '88%',
-        recommendation: 'Dispatch P2 field crew to clean solar glass panels and test auxiliary battery bank.',
         evidence: [
           {
             title: '01 • Bus Voltage Under-run',
@@ -107,9 +101,6 @@ class InvestigateController {
         imputedVal: '31.8°C',
         imputeConf: 'Estimation Confidence: 99%',
         chartTitle: 'Incident Forensic Waveform & Baseline Envelope (Chennai)',
-        weatherSupport: '99%',
-        anomalySupport: '1%',
-        recommendation: 'No maintenance intervention required. Station acting as regional spatial anchor.',
         evidence: [
           {
             title: '01 • Spatial Consensus Match',
