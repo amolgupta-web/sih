@@ -1,7 +1,7 @@
 /**
  * SkyGuard AI — Unified Comparative Chart Canvas Engine
- * Pure HTML5 Canvas 2D engine supporting interactive factor toggles
- * (Temperature, Humidity, Pressure, AI Baseline, and Normal Daily Envelope).
+ * Pure HTML5 Canvas 2D engine supporting multi-parameter dynamic scaling
+ * and interactive layer toggles.
  */
 
 class UnifiedComparativeChart {
@@ -80,13 +80,27 @@ class UnifiedComparativeChart {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, width, height);
 
-    const pad = { top: 25, right: 35, bottom: 30, left: 45 };
+    const pad = { top: 25, right: 35, bottom: 30, left: 52 };
     const plotW = width - pad.left - pad.right;
     const plotH = height - pad.top - pad.bottom;
 
+    // Determine primary active scale based on checked layers
+    let activeScale = { min: 15, max: 60, unit: '°C', label: 'Temperature' };
+    if (this.visibleLayers.hum && !this.visibleLayers.temp && !this.visibleLayers.press) {
+      activeScale = { min: 0, max: 100, unit: '%', label: 'Humidity' };
+    } else if (this.visibleLayers.press && !this.visibleLayers.temp && !this.visibleLayers.hum) {
+      activeScale = { min: 980, max: 1040, unit: ' hPa', label: 'Pressure' };
+    } else if (this.visibleLayers.temp) {
+      activeScale = { min: 15, max: 60, unit: '°C', label: 'Temperature' };
+    } else if (this.visibleLayers.hum) {
+      activeScale = { min: 0, max: 100, unit: '%', label: 'Humidity' };
+    } else if (this.visibleLayers.press) {
+      activeScale = { min: 980, max: 1040, unit: ' hPa', label: 'Pressure' };
+    }
+
     const tempScale = { min: 15, max: 60 };
-    const humScale = { min: 20, max: 100 };
-    const pressScale = { min: 990, max: 1030 };
+    const humScale = { min: 0, max: 100 };
+    const pressScale = { min: 980, max: 1040 };
 
     const getY = (val, scale) => {
       const ratio = (val - scale.min) / (scale.max - scale.min);
@@ -95,7 +109,7 @@ class UnifiedComparativeChart {
 
     const getX = (idx, total) => pad.left + (idx / Math.max(1, total - 1)) * plotW;
 
-    // 1. Grid Lines & Y-Axis Labels
+    // 1. Grid Lines & Dynamic Y-Axis Labels
     ctx.strokeStyle = 'rgba(226, 232, 240, 0.8)';
     ctx.lineWidth = 1;
     ctx.fillStyle = '#94A3B8';
@@ -104,20 +118,27 @@ class UnifiedComparativeChart {
 
     const steps = 4;
     for (let i = 0; i <= steps; i++) {
-      const val = tempScale.min + (i / steps) * (tempScale.max - tempScale.min);
-      const y = getY(val, tempScale);
+      const val = activeScale.min + (i / steps) * (activeScale.max - activeScale.min);
+      const y = pad.top + plotH - (i / steps) * plotH;
+      
       ctx.beginPath();
       ctx.moveTo(pad.left, y);
       ctx.lineTo(pad.left + plotW, y);
       ctx.stroke();
 
-      if (this.visibleLayers.temp) {
-        ctx.fillText(`${val.toFixed(0)}°`, pad.left - 6, y + 3.5);
-      }
+      let labelText = `${val.toFixed(0)}${activeScale.unit}`;
+      if (activeScale.unit === ' hPa') labelText = `${val.toFixed(0)}`;
+      ctx.fillText(labelText, pad.left - 6, y + 3.5);
     }
 
-    // 2. Normal Daily Range (Safe Zone Envelope)
-    if (this.visibleLayers.envelope) {
+    // Axis Unit Title Header
+    ctx.fillStyle = '#64748B';
+    ctx.font = 'bold 9.5px Inter, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Scale: ${activeScale.label} (${activeScale.unit})`, pad.left, pad.top - 10);
+
+    // 2. Normal Daily Range (Safe Zone Envelope - only relevant when Temperature is active)
+    if (this.visibleLayers.envelope && (this.visibleLayers.temp || (!this.visibleLayers.hum && !this.visibleLayers.press))) {
       const envTopY = getY(28.5, tempScale);
       const envBotY = getY(22.0, tempScale);
 
@@ -136,7 +157,7 @@ class UnifiedComparativeChart {
     }
 
     // 3. AI Baseline Imputation
-    if (this.visibleLayers.baseline) {
+    if (this.visibleLayers.baseline && (this.visibleLayers.temp || (!this.visibleLayers.hum && !this.visibleLayers.press))) {
       const baseVal = stId === 'AWS-CHE-12' ? 31.8 : 25.4;
       const baseY = getY(baseVal, tempScale);
 
@@ -155,7 +176,7 @@ class UnifiedComparativeChart {
     // 4. Humidity Curve
     if (this.visibleLayers.hum) {
       ctx.strokeStyle = '#3B82F6';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.2;
       ctx.beginPath();
       buffer.forEach((pt, idx) => {
         const x = getX(idx, buffer.length);
@@ -169,7 +190,7 @@ class UnifiedComparativeChart {
     // 5. Pressure Curve
     if (this.visibleLayers.press) {
       ctx.strokeStyle = '#C98A1C';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.2;
       ctx.beginPath();
       buffer.forEach((pt, idx) => {
         const x = getX(idx, buffer.length);
@@ -180,7 +201,7 @@ class UnifiedComparativeChart {
       ctx.stroke();
     }
 
-    // 6. Temperature Curve & Anomaly Flags
+    // 6. Temperature Curve & Anomaly Pins
     if (this.visibleLayers.temp) {
       ctx.strokeStyle = stId === 'AWS-JPR-04' ? '#D9534F' : '#2E9B73';
       ctx.lineWidth = 2.4;
