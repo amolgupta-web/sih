@@ -43,7 +43,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   2. GLOBAL RESET & BASE STYLING
+   2. GLOBAL RESET & BASE STYLING (DEFAULT SYSTEM CURSOR ENFORCED)
    -------------------------------------------------------------------------- */
 * {
   box-sizing: border-box;
@@ -72,6 +72,7 @@ input, textarea {
   cursor: text !important;
 }
 
+/* Subtle Atmospheric Radial Background */
 .atmospheric-bg {
   position: fixed;
   top: 0;
@@ -197,7 +198,7 @@ input, textarea {
 }
 
 /* --------------------------------------------------------------------------
-   4. MAIN VIEW CONTAINER & SECTION ROUTING
+   4. MAIN OPERATIONAL CONTAINER
    -------------------------------------------------------------------------- */
 .view-wrapper {
   flex: 1;
@@ -326,7 +327,7 @@ input, textarea {
 }
 
 /* --------------------------------------------------------------------------
-   6. COMMAND CENTER: CHART PANEL & ATTENTION QUEUE
+   6. COMMAND CENTER: CHART & ATTENTION QUEUE
    -------------------------------------------------------------------------- */
 .command-workspace-grid {
   display: grid;
@@ -355,10 +356,11 @@ input, textarea {
 
 .chart-channel-toggles {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   font-size: 0.76rem;
   color: var(--text-secondary);
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .channel-tag {
@@ -376,6 +378,23 @@ input, textarea {
 .channel-dot.temp { background: #D9534F; }
 .channel-dot.hum { background: #3B82F6; }
 .channel-dot.press { background: #C98A1C; }
+
+/* Normal Daily Range Badge */
+.channel-band-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+  background: rgba(46, 155, 115, 0.25);
+  border: 1px solid rgba(46, 155, 115, 0.6);
+  border-radius: 2px;
+}
+
+.normal-range-tag {
+  background: rgba(46, 155, 115, 0.08);
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(46, 155, 115, 0.2);
+}
 
 .timeframe-group {
   display: flex;
@@ -512,6 +531,8 @@ input, textarea {
   border-top: 1px solid var(--border-light);
   padding-top: 10px;
   margin-top: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 /* Attention Queue */
@@ -584,9 +605,9 @@ input, textarea {
 }
 
 /* --------------------------------------------------------------------------
-   8. PAGE 3: INVESTIGATE (INCIDENT FORENSIC MODE)
+   8. PAGE 3: INVESTIGATE & CITY SWITCHING TABS
    -------------------------------------------------------------------------- */
-.investigate-city-tabs {
+.investigate-city-tabs, .sensor-health-city-tabs {
   display: flex;
   gap: 10px;
   margin-bottom: 18px;
