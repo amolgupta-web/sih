@@ -1,7 +1,7 @@
 /**
  * SkyGuard AI — Unified Comparative Chart Canvas Engine
- * Pure HTML5 Canvas 2D engine supporting multi-parameter dynamic scaling
- * and interactive layer toggles.
+ * Pure HTML5 Canvas 2D engine supporting interactive factor toggles,
+ * dynamic multi-parameter y-axis scaling, and real-time mouse hover tooltips.
  */
 
 class UnifiedComparativeChart {
@@ -18,7 +18,10 @@ class UnifiedComparativeChart {
       envelope: true
     };
 
+    this.hoverIndex = null;
+
     this.initToggles();
+    this.initMouseTracking();
     this.bindWindowResize();
     
     setTimeout(() => this.resizeCanvas(), 50);
@@ -41,6 +44,36 @@ class UnifiedComparativeChart {
     bindToggle('toggle-press', 'press');
     bindToggle('toggle-baseline', 'baseline');
     bindToggle('toggle-envelope', 'envelope');
+  }
+
+  initMouseTracking() {
+    this.canvas.addEventListener('mousemove', (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      
+      const stream = window.OperationalStreamEngineInstance;
+      const stId = stream ? stream.activeStation : 'AWS-JPR-04';
+      const buffer = stream ? stream.getBuffer(stId) : [];
+      if (!buffer || buffer.length === 0) return;
+
+      const pad = { top: 25, right: 35, bottom: 30, left: 55 };
+      const width = parseFloat(this.canvas.style.width) || 600;
+      const plotW = width - pad.left - pad.right;
+
+      // Find nearest data point index based on mouse X position
+      const relX = mouseX - pad.left;
+      const index = Math.round((relX / plotW) * (buffer.length - 1));
+
+      if (index >= 0 && index < buffer.length) {
+        this.hoverIndex = index;
+        this.render();
+      }
+    });
+
+    this.canvas.addEventListener('mouseleave', () => {
+      this.hoverIndex = null;
+      this.render();
+    });
   }
 
   bindWindowResize() {
@@ -109,7 +142,7 @@ class UnifiedComparativeChart {
 
     const getX = (idx, total) => pad.left + (idx / Math.max(1, total - 1)) * plotW;
 
-    // 1. Grid Lines & Dynamic Y-Axis Labels matching active scale
+    // 1. Grid Lines & Dynamic Y-Axis Labels
     ctx.strokeStyle = 'rgba(226, 232, 240, 0.8)';
     ctx.lineWidth = 1;
     ctx.fillStyle = '#94A3B8';
@@ -130,13 +163,12 @@ class UnifiedComparativeChart {
       ctx.fillText(labelText, pad.left - 6, y + 3.5);
     }
 
-    // Axis Unit Title Header
     ctx.fillStyle = '#64748B';
     ctx.font = 'bold 9.5px Inter, sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText(`Scale: ${activeScale.label} (${activeScale.unit})`, pad.left, pad.top - 10);
 
-    // 2. Normal Daily Range Envelope (Temperature specific)
+    // 2. Normal Daily Range Envelope
     if (this.visibleLayers.envelope && (this.visibleLayers.temp || (!this.visibleLayers.hum && !this.visibleLayers.press))) {
       const envTopY = getY(28.5, tempScale);
       const envBotY = getY(22.0, tempScale);
@@ -232,6 +264,53 @@ class UnifiedComparativeChart {
           ctx.fillText('ANOMALY', x, y - 8);
         }
       });
+    }
+
+    // 7. Hover Tooltip Crosshair & Floating Box
+    if (this.hoverIndex !== null && buffer[this.hoverIndex]) {
+      const pt = buffer[this.hoverIndex];
+      const hX = getX(this.hoverIndex, buffer.length);
+
+      // Vertical crosshair line
+      ctx.strokeStyle = 'rgba(23, 32, 30, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(hX, pad.top);
+      ctx.lineTo(hX, pad.top + plotH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Tooltip Box Dimensions
+      const boxW = 150;
+      const boxH = 68;
+      let boxX = hX + 12;
+      let boxY = pad.top + 10;
+
+      if (boxX + boxW > width - pad.right) {
+        boxX = hX - boxW - 12;
+      }
+
+      // Draw Tooltip Card Background
+      ctx.fillStyle = 'rgba(23, 32, 30, 0.9)';
+      ctx.strokeStyle = 'rgba(46, 155, 115, 0.6)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(boxX, boxY, boxW, boxH, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      // Tooltip Text
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px Inter, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`Time: ${pt.timeStr}`, boxX + 10, boxY + 16);
+
+      ctx.font = '9.5px Inter, sans-serif';
+      ctx.fillStyle = '#E2E8F0';
+      ctx.fillText(`Temp: ${pt.temperature}°C`, boxX + 10, boxY + 32);
+      ctx.fillText(`Humidity: ${pt.humidity}%`, boxX + 10, boxY + 46);
+      ctx.fillText(`Pressure: ${pt.pressure} hPa`, boxX + 10, boxY + 60);
     }
 
     // Timestamps at bottom
