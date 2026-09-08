@@ -6,6 +6,7 @@
 
 ---
 
+
 ## 🧭 Core Product Positioning: “Can I trust this weather data?”
 
 Automatic Weather Stations (AWS) provide critical ground truth for national numerical weather prediction (NWP) models, civil flood/cyclone warning systems, and aviation routing. However, extreme thermal gradients, condensation, and electrical noise routinely trigger abnormal readings.
