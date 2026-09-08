@@ -1,7 +1,7 @@
 /**
  * SkyGuard AI — Data Trust Audit & Traceability Log Controller
  * Maintains an immutable log of sensor observations, trust scores, and ML classifications,
- * featuring real-time search filtering and CSV export.
+ * featuring real-time search filtering, colored badge rendering, and CSV export.
  */
 
 class DataTrustLogController {
@@ -19,7 +19,6 @@ class DataTrustLogController {
         rawReading: '55.2°C',
         imputed: '25.4°C',
         trustScore: '12 / 100',
-        trustClass: 'badge-critical',
         decision: 'PROBABLE SENSOR ANOMALY',
         confidence: '98.4%',
         action: 'Quarantined for Audit'
@@ -32,7 +31,6 @@ class DataTrustLogController {
         rawReading: '76.0%',
         imputed: '58.0%',
         trustScore: '74 / 100',
-        trustClass: 'badge-attention',
         decision: 'CALIBRATION DRIFT',
         confidence: '88.1%',
         action: 'Flagged for Calibration'
@@ -45,7 +43,6 @@ class DataTrustLogController {
         rawReading: '1011.0 hPa',
         imputed: '1011.0 hPa',
         trustScore: '94 / 100',
-        trustClass: 'badge-trusted',
         decision: 'TRUSTED STREAM',
         confidence: '99.2%',
         action: 'Passed to NWP Grid'
@@ -58,7 +55,6 @@ class DataTrustLogController {
         rawReading: '44.0%',
         imputed: '44.0%',
         trustScore: '91 / 100',
-        trustClass: 'badge-trusted',
         decision: 'TRUSTED STREAM',
         confidence: '97.5%',
         action: 'Passed to NWP Grid'
@@ -71,7 +67,6 @@ class DataTrustLogController {
         rawReading: '10.8 V',
         imputed: '12.6 V',
         trustScore: '68 / 100',
-        trustClass: 'badge-attention',
         decision: 'POWER DROOP DETECTED',
         confidence: '91.0%',
         action: 'Logged for Maintenance'
@@ -93,7 +88,7 @@ class DataTrustLogController {
     if (this.filteredLogs.length === 0) {
       this.tbody.innerHTML = `
         <tr>
-          <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 24px;">
+          <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 28px;">
             No verification audit records found matching your filter criteria.
           </td>
         </tr>
@@ -102,37 +97,43 @@ class DataTrustLogController {
     }
 
     this.tbody.innerHTML = this.filteredLogs
-      .map(
-        (log) => `
-      <tr>
-        <td style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary);">
-          ${log.date} ${log.time}
-        </td>
-        <td>
-          <strong style="color: var(--text-primary);">${log.stationId}</strong>
-        </td>
-        <td>${log.parameter}</td>
-        <td style="font-weight: 700; color: ${
-          log.rawReading.includes('55.2') ? 'var(--status-critical)' : 'var(--text-primary)'
-        };">
-          ${log.rawReading}
-        </td>
-        <td style="color: var(--brand-teal); font-weight: 600;">${log.imputed}</td>
-        <td>
-          <span class="trust-badge ${log.trustClass}" style="padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 0.72rem;">
-            ${log.trustScore}
-          </span>
-        </td>
-        <td style="font-weight: 600; font-size: 0.78rem;">${log.decision}</td>
-        <td style="color: var(--text-secondary);">${log.confidence}</td>
-        <td>
-          <span style="font-size: 0.75rem; color: var(--text-secondary); background: var(--bg-main); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-light);">
-            ${log.action}
-          </span>
-        </td>
-      </tr>
-    `
-      )
+      .map((log) => {
+        const isCritical = log.decision.includes('ANOMALY');
+        const isWarning = log.decision.includes('DRIFT') || log.decision.includes('DROOP');
+
+        const badgeClass = isCritical ? 'badge-critical' : isWarning ? 'badge-attention' : 'badge-trusted';
+        const rawColor = isCritical ? 'color: var(--status-critical); font-weight: 700;' : 'color: var(--text-primary); font-weight: 600;';
+
+        return `
+          <tr>
+            <td style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-primary); font-weight: 500;">
+              ${log.date} <span style="color: var(--text-secondary);">${log.time}</span>
+            </td>
+            <td>
+              <strong style="color: var(--text-primary); font-size: 0.82rem;">${log.stationId}</strong>
+            </td>
+            <td style="color: var(--text-primary); font-weight: 500;">${log.parameter}</td>
+            <td style="${rawColor}">${log.rawReading}</td>
+            <td style="color: var(--brand-teal); font-weight: 700;">${log.imputed}</td>
+            <td>
+              <span class="trust-badge ${badgeClass}">
+                ${log.trustScore}
+              </span>
+            </td>
+            <td>
+              <span class="trust-badge ${badgeClass}" style="letter-spacing: 0.02em;">
+                ● ${log.decision}
+              </span>
+            </td>
+            <td style="color: var(--text-secondary); font-family: var(--font-mono); font-size: 0.76rem;">${log.confidence}</td>
+            <td>
+              <span style="font-size: 0.74rem; font-weight: 600; color: var(--text-secondary); background: var(--bg-app); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-light);">
+                ${log.action}
+              </span>
+            </td>
+          </tr>
+        `;
+      })
       .join('');
   }
 
