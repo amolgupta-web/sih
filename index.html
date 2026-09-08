@@ -179,14 +179,22 @@
               </div>
             </div>
 
+            <!-- Focal Station Selector Bar -->
+            <div class="focal-station-switcher" style="display:flex; align-items:center; gap:8px; margin: 6px 0 10px 0; font-size:12px;">
+              <span style="color:var(--text-secondary); font-weight:600;">Focal Station:</span>
+              <button class="station-pill-btn active" data-station-id="AWS-JPR-04">Jaipur (AWS-JPR-04)</button>
+              <button class="station-pill-btn" data-station-id="AWS-DEL-07">Delhi (AWS-DEL-07)</button>
+              <button class="station-pill-btn" data-station-id="AWS-CHE-12">Chennai (AWS-CHE-12)</button>
+            </div>
+
             <!-- Canvas Container -->
             <div class="unified-chart-wrap">
               <canvas id="unified-comparative-canvas"></canvas>
             </div>
 
             <div class="chart-footer-meta">
-              <span>Focal Station: <strong>AWS-JPR-04 (Jaipur Semi-Arid Grid)</strong></span>
-              <span style="color:var(--status-critical); font-weight:600">● 1 Anomaly Flagged at 14:32:15</span>
+              <span>Focal Station: <strong id="cmd-active-station-name">AWS-JPR-04 (Jaipur Semi-Arid Grid)</strong></span>
+              <span style="color:var(--status-critical); font-weight:600" id="cmd-chart-alert-tag">• 1 Anomaly Flagged at 14:32:15</span>
               <span>Green Shaded Band: Expected Diurnal Envelope</span>
             </div>
           </div>
@@ -224,7 +232,6 @@
         </div>
 
         <div class="network-view-layout">
-          <!-- Station Directory Hybrid Table -->
           <div class="network-table-card">
             <table class="data-table">
               <thead>
@@ -238,13 +245,10 @@
                   <th>Action</th>
                 </tr>
               </thead>
-              <tbody id="network-directory-tbody">
-                <!-- Rendered dynamically by live-network.js -->
-              </tbody>
+              <tbody id="network-directory-tbody"></tbody>
             </table>
           </div>
 
-          <!-- Supporting Geographic Mesonet Context Map -->
           <div class="network-map-card">
             <div style="display:flex; align-items:center; justify-content:space-between">
               <h3 style="font-size:0.92rem; font-weight:700">Mesonet Topology & Spatial Context</h3>
@@ -278,7 +282,6 @@
         </div>
 
         <div class="investigate-layout">
-          <!-- Incident Header Banner -->
           <div class="incident-header-banner">
             <div class="incident-meta-col">
               <div class="incident-tag-row">
@@ -293,7 +296,6 @@
               </div>
             </div>
 
-            <!-- AI Verdict Box -->
             <div class="incident-verdict-col">
               <span class="verdict-header">AI Verdict</span>
               <div class="verdict-main">PROBABLE SENSOR ANOMALY</div>
@@ -302,7 +304,6 @@
             </div>
           </div>
 
-          <!-- Raw vs Imputed (AI Estimated) Data Audit Card -->
           <div class="imputation-audit-card">
             <div class="impute-box">
               <span class="impute-label">Raw Sensor Reading (Unfiltered)</span>
@@ -322,7 +323,6 @@
             </div>
           </div>
 
-          <!-- Event Replay Interactive Scrubber -->
           <div class="replay-scrubber-card">
             <div class="replay-header">
               <div style="display:flex; align-items:center; gap:8px">
@@ -336,19 +336,12 @@
               </div>
             </div>
 
-            <!-- Scrubber Steps -->
-            <div id="replay-steps-container" class="replay-timeline-steps">
-              <!-- Rendered dynamically by investigate.js -->
-            </div>
+            <div id="replay-steps-container" class="replay-timeline-steps"></div>
 
-            <div id="replay-step-note" style="font-size:0.78rem; color:var(--text-secondary); background:var(--bg-main); padding:8px 12px; border-radius:var(--radius-xs); border:1px solid var(--border-light)">
-              <!-- Step note populated dynamically -->
-            </div>
+            <div id="replay-step-note" style="font-size:0.78rem; color:var(--text-secondary); background:var(--bg-main); padding:8px 12px; border-radius:var(--radius-xs); border:1px solid var(--border-light)"></div>
           </div>
 
-          <!-- Ranked Evidence Stack & Reality Check -->
           <div class="evidence-reality-grid">
-            <!-- Left: Ranked Evidence Stack -->
             <div class="evidence-stack-card">
               <div style="display:flex; align-items:center; justify-content:space-between">
                 <h4 style="font-size:0.95rem; font-weight:700">Why SkyGuard Flagged This (Ranked Evidence)</h4>
@@ -356,7 +349,6 @@
               </div>
 
               <div class="evidence-list">
-                <!-- Evidence 01 -->
                 <div class="evidence-item">
                   <div class="evidence-top">
                     <span class="evidence-num-title">01 • Historical Baseline Deviation</span>
@@ -367,7 +359,6 @@
                   </p>
                 </div>
 
-                <!-- Evidence 02 -->
                 <div class="evidence-item">
                   <div class="evidence-top">
                     <span class="evidence-num-title">02 • Temporal Deviation Rate</span>
@@ -378,7 +369,6 @@
                   </p>
                 </div>
 
-                <!-- Evidence 03 -->
                 <div class="evidence-item">
                   <div class="evidence-top">
                     <span class="evidence-num-title">03 • Cross-Sensor Consistency</span>
@@ -389,7 +379,6 @@
                   </p>
                 </div>
 
-                <!-- Evidence 04 -->
                 <div class="evidence-item">
                   <div class="evidence-top">
                     <span class="evidence-num-title">04 • Nearby Station Comparison</span>
@@ -401,7 +390,6 @@
                 </div>
               </div>
 
-              <!-- Technical Details Collapsible Box -->
               <div style="margin-top:4px">
                 <button id="btn-toggle-tech-details" class="btn-control" style="width:100%; justify-content:center">
                   Show Advanced Technical Details (SHAP / Loss) ▼
@@ -415,7 +403,6 @@
               </div>
             </div>
 
-            <!-- Right: Reality Check Component -->
             <div class="reality-check-card">
               <div>
                 <h4 style="font-size:0.95rem; font-weight:700">Reality Check: Weather or Sensor Fault?</h4>
@@ -425,7 +412,6 @@
               </div>
 
               <div class="reality-split-view">
-                <!-- Weather Side -->
                 <div class="reality-side-col weather-side">
                   <span class="reality-col-title" style="color:var(--status-trusted)">Genuine Weather Event</span>
                   <ul class="reality-check-list">
@@ -439,7 +425,6 @@
                   </div>
                 </div>
 
-                <!-- Anomaly Side -->
                 <div class="reality-side-col anomaly-side">
                   <span class="reality-col-title" style="color:var(--status-critical)">Sensor Anomaly</span>
                   <ul class="reality-check-list">
@@ -454,7 +439,6 @@
                 </div>
               </div>
 
-              <!-- AI Verdict Summary -->
               <div style="background:var(--bg-main); padding:12px; border-radius:var(--radius-xs); border:1px solid var(--border-light)">
                 <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; color:var(--text-secondary)">Final System Recommendation</div>
                 <div style="font-size:0.85rem; font-weight:700; color:var(--text-primary); margin-top:2px">
@@ -479,9 +463,7 @@
         </div>
 
         <div class="sensor-health-layout">
-          <!-- 3 Sensor Health Cards -->
           <div class="sensor-health-overview-grid">
-            <!-- Card 1 -->
             <div class="sensor-health-tile">
               <div class="sensor-tile-top">
                 <span class="sensor-tile-title">Temperature (PT100 RTD)</span>
@@ -502,7 +484,6 @@
               </div>
             </div>
 
-            <!-- Card 2 -->
             <div class="sensor-health-tile">
               <div class="sensor-tile-top">
                 <span class="sensor-tile-title">Humidity (Capacitive Polymer)</span>
@@ -523,7 +504,6 @@
               </div>
             </div>
 
-            <!-- Card 3 -->
             <div class="sensor-health-tile">
               <div class="sensor-tile-top">
                 <span class="sensor-tile-title">Pressure (Piezoresistive Baro)</span>
@@ -545,7 +525,6 @@
             </div>
           </div>
 
-          <!-- 90-Day Degradation Timeline -->
           <div class="lifecycle-timeline-card">
             <div>
               <h3 style="font-size:1.05rem; font-weight:700">Temperature Sensor 90-Day Degradation Timeline (AWS-JPR-04)</h3>
@@ -619,9 +598,7 @@
                   <th>Action</th>
                 </tr>
               </thead>
-              <tbody id="maintenance-tbody">
-                <!-- Rendered dynamically by maintenance.js -->
-              </tbody>
+              <tbody id="maintenance-tbody"></tbody>
             </table>
           </div>
         </div>
@@ -663,9 +640,7 @@
                   <th>Action Required</th>
                 </tr>
               </thead>
-              <tbody id="trust-log-tbody">
-                <!-- Rendered dynamically by data-trust-log.js -->
-              </tbody>
+              <tbody id="trust-log-tbody"></tbody>
             </table>
           </div>
         </div>
