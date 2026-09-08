@@ -1,7 +1,7 @@
 /**
  * SkyGuard AI — Master Application Orchestrator & Router (PS 73)
  * Controls top navigation views, deep-linking, cross-module dispatches,
- * and component lifecycle management without custom cursor dependencies.
+ * and synchronized city selection across Investigate and Sensor Health.
  */
 
 class AppRouter {
@@ -21,7 +21,7 @@ class AppRouter {
 
   bindNavigation() {
     this.navTabs.forEach((tab) => {
-      tab.addEventListener('click', (e) => {
+      tab.addEventListener('click', () => {
         const targetView = tab.dataset.view;
         if (targetView) {
           this.switchView(targetView);
@@ -34,7 +34,7 @@ class AppRouter {
     window.addEventListener('hashchange', () => {
       const hash = window.location.hash.replace('#', '');
       if (hash && document.getElementById(`view-${hash}`)) {
-        this.switchView(hash, false);
+        this.switchView(hash, null, false);
       }
     });
   }
@@ -42,13 +42,19 @@ class AppRouter {
   handleInitialRoute() {
     const hash = window.location.hash.replace('#', '');
     if (hash && document.getElementById(`view-${hash}`)) {
-      this.switchView(hash, false);
+      this.switchView(hash, null, false);
     } else {
-      this.switchView('command-center', false);
+      this.switchView('command-center', null, false);
     }
   }
 
-  switchView(viewName, updateHash = true) {
+  /**
+   * Switches views and optionally activates a target focal station.
+   * @param {string} viewName View ID to display (e.g. 'command-center', 'investigate', 'sensor-health')
+   * @param {string|null} stationId Focal station ID ('AWS-JPR-04', 'AWS-DEL-07', 'AWS-CHE-12')
+   * @param {boolean} updateHash Whether to sync browser URL hash
+   */
+  switchView(viewName, stationId = null, updateHash = true) {
     const targetSection = document.getElementById(`view-${viewName}`);
     if (!targetSection) return;
 
@@ -63,7 +69,7 @@ class AppRouter {
       }
     });
 
-    // Update View Sections
+    // Update Section Visibility
     this.viewSections.forEach((sec) => {
       if (sec.id === `view-${viewName}`) {
         sec.classList.add('active-view');
@@ -78,10 +84,26 @@ class AppRouter {
       window.location.hash = viewName;
     }
 
-    // Trigger canvas resize recalculation if entering Command Center
+    // Pass station selection down to relevant controller
+    if (stationId) {
+      if (viewName === 'investigate' && window.InvestigateControllerInstance) {
+        window.InvestigateControllerInstance.setStation(stationId);
+      } else if (viewName === 'sensor-health' && window.SensorHealthControllerInstance) {
+        window.SensorHealthControllerInstance.setStation(stationId);
+      } else if (viewName === 'command-center' && window.OperationalStreamEngineInstance) {
+        window.OperationalStreamEngineInstance.setStation(stationId);
+      }
+    }
+
+    // Canvas resize trigger for active views
     if (viewName === 'command-center' && window.UnifiedComparativeChartInstance) {
       setTimeout(() => {
         window.UnifiedComparativeChartInstance.resizeCanvas();
+      }, 50);
+    } else if (viewName === 'investigate' && window.InvestigateControllerInstance) {
+      setTimeout(() => {
+        const activeSt = stationId || window.InvestigateControllerInstance.activeStation;
+        window.InvestigateControllerInstance.drawForensicChart(activeSt);
       }, 50);
     }
   }
@@ -97,12 +119,12 @@ document.addEventListener('DOMContentLoaded', () => {
     window.initStreamEngine();
   }
 
-  // 3. Initialize Comparative Chart Renderer
+  // 3. Initialize Unified Canvas Chart Renderer
   if (typeof window.initUnifiedChart === 'function') {
     window.initUnifiedChart();
   }
 
-  // 4. Initialize Core Domain Controllers
+  // 4. Initialize Domain Controllers
   if (typeof window.initCommandCenter === 'function') {
     window.initCommandCenter();
   }
