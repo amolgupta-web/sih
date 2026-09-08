@@ -1,149 +1,213 @@
 /**
- * SkyGuard AI — Data Trust Audit Log Controller
- * Provides an immutable, traceable log of all sensor readings, trust scores, and AI decisions.
+ * SkyGuard AI — Data Trust Audit & Traceability Log Controller
+ * Maintains an immutable log of sensor observations, trust scores, and ML classifications,
+ * featuring real-time search filtering and CSV export.
  */
 
 class DataTrustLogController {
   constructor() {
-    this.tableBody = document.getElementById('trust-log-tbody');
+    this.tbody = document.getElementById('trust-log-tbody');
     this.searchInput = document.getElementById('trust-log-search');
     this.exportBtn = document.getElementById('btn-export-log-csv');
 
-    this.logEntries = [
+    this.logs = [
       {
         time: '14:32:18',
-        station: 'AWS-JPR-04',
-        param: 'Temperature',
-        raw: '55.2°C',
+        date: '2026-09-08',
+        stationId: 'AWS-JPR-04',
+        parameter: 'Temperature (°C)',
+        rawReading: '55.2°C',
         imputed: '25.4°C',
-        trust: 12,
-        decision: 'Sensor Spike Flagged',
-        conf: 98,
-        action: 'Inspection Required'
+        trustScore: '12 / 100',
+        trustClass: 'badge-critical',
+        decision: 'PROBABLE SENSOR ANOMALY',
+        confidence: '98.4%',
+        action: 'Quarantined for Audit'
       },
       {
-        time: '14:28:44',
-        station: 'AWS-DEL-07',
-        param: 'Relative Humidity',
-        raw: '76.4%',
-        imputed: '62.1%',
-        trust: 74,
-        decision: 'Gradual Drift Detected',
-        conf: 91,
-        action: 'Schedule Calibration'
+        time: '14:30:00',
+        date: '2026-09-08',
+        stationId: 'AWS-DEL-07',
+        parameter: 'Relative Humidity (%)',
+        rawReading: '76.0%',
+        imputed: '58.0%',
+        trustScore: '74 / 100',
+        trustClass: 'badge-attention',
+        decision: 'CALIBRATION DRIFT',
+        confidence: '88.1%',
+        action: 'Flagged for Calibration'
       },
       {
-        time: '14:15:10',
-        station: 'AWS-MUM-02',
-        param: 'Pressure',
-        raw: '1010.8 hPa',
-        imputed: '—',
-        trust: 98,
-        decision: 'Trusted Meteorological Data',
-        conf: 97,
-        action: 'None (Nominal)'
+        time: '14:28:15',
+        date: '2026-09-08',
+        stationId: 'AWS-CHE-12',
+        parameter: 'Barometric Pressure',
+        rawReading: '1011.0 hPa',
+        imputed: '1011.0 hPa',
+        trustScore: '94 / 100',
+        trustClass: 'badge-trusted',
+        decision: 'TRUSTED STREAM',
+        confidence: '99.2%',
+        action: 'Passed to NWP Grid'
       },
       {
-        time: '14:02:55',
-        station: 'AWS-BLR-02',
-        param: 'Temperature',
-        raw: '21.6°C',
-        imputed: '—',
-        trust: 99,
-        decision: 'Trusted Meteorological Data',
-        conf: 99,
-        action: 'None (Nominal)'
+        time: '14:26:00',
+        date: '2026-09-08',
+        stationId: 'AWS-JPR-04',
+        parameter: 'Relative Humidity (%)',
+        rawReading: '44.0%',
+        imputed: '44.0%',
+        trustScore: '91 / 100',
+        trustClass: 'badge-trusted',
+        decision: 'TRUSTED STREAM',
+        confidence: '97.5%',
+        action: 'Passed to NWP Grid'
       },
       {
-        time: '13:58:30',
-        station: 'AWS-HIM-09',
-        param: 'Pressure',
-        raw: '994.0 hPa',
-        imputed: '—',
-        trust: 97,
-        decision: 'Trusted Meteorological Data',
-        conf: 98,
-        action: 'None (Nominal)'
+        time: '14:24:45',
+        date: '2026-09-08',
+        stationId: 'AWS-DEL-07',
+        parameter: 'Transducer Voltage (V)',
+        rawReading: '10.8 V',
+        imputed: '12.6 V',
+        trustScore: '68 / 100',
+        trustClass: 'badge-attention',
+        decision: 'POWER DROOP DETECTED',
+        confidence: '91.0%',
+        action: 'Logged for Maintenance'
       }
     ];
 
+    this.filteredLogs = [...this.logs];
     this.init();
   }
 
   init() {
-    this.render(this.logEntries);
-
-    if (this.searchInput) {
-      this.searchInput.addEventListener('input', (e) => {
-        const q = e.target.value.toLowerCase();
-        const filtered = this.logEntries.filter(r => 
-          r.station.toLowerCase().includes(q) || 
-          r.param.toLowerCase().includes(q) || 
-          r.decision.toLowerCase().includes(q)
-        );
-        this.render(filtered);
-      });
-    }
-
-    if (this.exportBtn) {
-      this.exportBtn.addEventListener('click', () => {
-        this.exportCSV();
-      });
-    }
+    this.render();
+    this.bindEvents();
   }
 
-  render(entries) {
-    if (!this.tableBody) return;
+  render() {
+    if (!this.tbody) return;
 
-    this.tableBody.innerHTML = entries.map(row => {
-      const badgeClass = row.trust < 50 ? 'badge-critical' : row.trust < 80 ? 'badge-attention' : 'badge-trusted';
-      return `
+    if (this.filteredLogs.length === 0) {
+      this.tbody.innerHTML = `
         <tr>
-          <td style="font-family:var(--font-mono); font-size:0.75rem">${row.time}</td>
-          <td><strong style="font-family:var(--font-mono)">${row.station}</strong></td>
-          <td>${row.param}</td>
-          <td>
-            <strong style="color:${row.trust < 50 ? 'var(--status-critical)' : 'inherit'}">${row.raw}</strong>
-          </td>
-          <td>
-            <span style="color:${row.imputed !== '—' ? 'var(--status-trusted)' : 'var(--text-tertiary)'}; font-weight:600">
-              ${row.imputed}
-            </span>
-          </td>
-          <td>
-            <span class="trust-badge ${badgeClass}">${row.trust} / 100</span>
-          </td>
-          <td>${row.decision}</td>
-          <td><strong>${row.conf}%</strong></td>
-          <td>
-            <span style="font-size:0.75rem; color:${row.action.includes('Required') ? 'var(--status-critical)' : 'var(--text-secondary)'}; font-weight:600">
-              ${row.action}
-            </span>
+          <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 24px;">
+            No verification audit records found matching your filter criteria.
           </td>
         </tr>
       `;
-    }).join('');
+      return;
+    }
+
+    this.tbody.innerHTML = this.filteredLogs
+      .map(
+        (log) => `
+      <tr>
+        <td style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary);">
+          ${log.date} ${log.time}
+        </td>
+        <td>
+          <strong style="color: var(--text-primary);">${log.stationId}</strong>
+        </td>
+        <td>${log.parameter}</td>
+        <td style="font-weight: 700; color: ${
+          log.rawReading.includes('55.2') ? 'var(--status-critical)' : 'var(--text-primary)'
+        };">
+          ${log.rawReading}
+        </td>
+        <td style="color: var(--brand-teal); font-weight: 600;">${log.imputed}</td>
+        <td>
+          <span class="trust-badge ${log.trustClass}" style="padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 0.72rem;">
+            ${log.trustScore}
+          </span>
+        </td>
+        <td style="font-weight: 600; font-size: 0.78rem;">${log.decision}</td>
+        <td style="color: var(--text-secondary);">${log.confidence}</td>
+        <td>
+          <span style="font-size: 0.75rem; color: var(--text-secondary); background: var(--bg-main); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-light);">
+            ${log.action}
+          </span>
+        </td>
+      </tr>
+    `
+      )
+      .join('');
   }
 
-  exportCSV() {
-    let csv = 'Timestamp,Station,Parameter,RawReading,ImputedReading,DataTrustScore,AIDecision,Confidence,Action\n';
-    this.logEntries.forEach(r => {
-      csv += `"${r.time}","${r.station}","${r.param}","${r.raw}","${r.imputed}","${r.trust}","${r.decision}","${r.conf}%","${r.action}"\n`;
-    });
+  bindEvents() {
+    // Real-time search filter
+    if (this.searchInput) {
+      this.searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        this.filteredLogs = this.logs.filter(
+          (log) =>
+            log.stationId.toLowerCase().includes(query) ||
+            log.parameter.toLowerCase().includes(query) ||
+            log.decision.toLowerCase().includes(query) ||
+            log.action.toLowerCase().includes(query)
+        );
+        this.render();
+      });
+    }
 
-    const blob = new Blob([csv], { type: 'text/csv' });
+    // Export CSV functionality
+    if (this.exportBtn) {
+      this.exportBtn.addEventListener('click', () => this.exportToCSV());
+    }
+  }
+
+  exportToCSV() {
+    const headers = [
+      'Timestamp',
+      'Station ID',
+      'Parameter',
+      'Raw Reading',
+      'AI Imputed',
+      'Data Trust',
+      'AI Decision',
+      'Confidence',
+      'Action Required'
+    ];
+
+    const rows = this.filteredLogs.map((log) => [
+      `"${log.date} ${log.time}"`,
+      `"${log.stationId}"`,
+      `"${log.parameter}"`,
+      `"${log.rawReading}"`,
+      `"${log.imputed}"`,
+      `"${log.trustScore}"`,
+      `"${log.decision}"`,
+      `"${log.confidence}"`,
+      `"${log.action}"`
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `SkyGuard_DataTrustLog_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const link = document.createElement('a');
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `SkyGuard_Data_Trust_Audit_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 }
 
+// Global Singleton Setup
 window.DataTrustLogControllerInstance = null;
-window.initDataTrustLog = function() {
+
+window.initDataTrustLog = function () {
   if (!window.DataTrustLogControllerInstance) {
     window.DataTrustLogControllerInstance = new DataTrustLogController();
   }
+  return window.DataTrustLogControllerInstance;
 };
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => window.initDataTrustLog());
+} else {
+  window.initDataTrustLog();
+}
