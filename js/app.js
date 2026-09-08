@@ -1,197 +1,124 @@
 /**
- * SkyGuard AI — Master Application Coordinator & View Router
- * Coordinates the 6 operational B2B workflows, simulation triggers, and scientific cursor.
+ * SkyGuard AI — Master Application Orchestrator & Router (PS 73)
+ * Controls top navigation views, deep-linking, cross-module dispatches,
+ * and component lifecycle management without custom cursor dependencies.
  */
 
-class ApplicationRouter {
+class AppRouter {
   constructor() {
-    this.tabs = document.querySelectorAll('.nav-tab-btn');
-    this.views = document.querySelectorAll('.view-section');
+    this.navTabs = document.querySelectorAll('.header-nav-strip .nav-tab-btn');
+    this.viewSections = document.querySelectorAll('.view-wrapper .view-section');
     this.currentView = 'command-center';
 
     this.init();
   }
 
   init() {
-    // Bind Tab Click
-    this.tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        const viewKey = tab.dataset.view;
-        if (viewKey) {
-          this.switchView(viewKey);
+    this.bindNavigation();
+    this.bindHashChange();
+    this.handleInitialRoute();
+  }
+
+  bindNavigation() {
+    this.navTabs.forEach((tab) => {
+      tab.addEventListener('click', (e) => {
+        const targetView = tab.dataset.view;
+        if (targetView) {
+          this.switchView(targetView);
         }
       });
     });
+  }
 
-    // Check URL hash on load
+  bindHashChange() {
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash && document.getElementById(`view-${hash}`)) {
+        this.switchView(hash, false);
+      }
+    });
+  }
+
+  handleInitialRoute() {
     const hash = window.location.hash.replace('#', '');
     if (hash && document.getElementById(`view-${hash}`)) {
-      this.switchView(hash);
+      this.switchView(hash, false);
     } else {
-      this.switchView('command-center');
+      this.switchView('command-center', false);
     }
+  }
 
-    // Listen to hash changes
-    window.addEventListener('hashchange', () => {
-      const h = window.location.hash.replace('#', '');
-      if (h && document.getElementById(`view-${h}`)) {
-        this.switchView(h, null, false);
+  switchView(viewName, updateHash = true) {
+    const targetSection = document.getElementById(`view-${viewName}`);
+    if (!targetSection) return;
+
+    this.currentView = viewName;
+
+    // Update Nav Buttons
+    this.navTabs.forEach((tab) => {
+      if (tab.dataset.view === viewName) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
       }
     });
 
-    // Bind Simulation Buttons ("Test the AI")
-    this.bindSimulations();
-
-    // Bind Cursor Toggle
-    this.bindCursorToggle();
-  }
-
-  switchView(viewKey, stationId = null, updateHash = true) {
-    this.currentView = viewKey;
-
-    // Update Nav Tabs
-    this.tabs.forEach(t => {
-      if (t.dataset.view === viewKey) t.classList.add('active');
-      else t.classList.remove('active');
-    });
-
-    // Update Views
-    this.views.forEach(v => {
-      if (v.id === `view-${viewKey}`) {
-        v.classList.add('active-view');
+    // Update View Sections
+    this.viewSections.forEach((sec) => {
+      if (sec.id === `view-${viewName}`) {
+        sec.classList.add('active-view');
+        sec.style.display = 'block';
       } else {
-        v.classList.remove('active-view');
+        sec.classList.remove('active-view');
+        sec.style.display = 'none';
       }
     });
 
     if (updateHash) {
-      window.location.hash = viewKey;
+      window.location.hash = viewName;
     }
 
-    // Window scroll to top of workspace
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    // Handle station parameter if passed
-    if (stationId && window.OperationalStreamEngineInstance) {
-      window.OperationalStreamEngineInstance.setStation(stationId);
-    }
-
-    // If switching to Command Center, trigger chart redraw and update data
-    if (viewKey === 'command-center') {
+    // Trigger canvas resize recalculation if entering Command Center
+    if (viewName === 'command-center' && window.UnifiedComparativeChartInstance) {
       setTimeout(() => {
-        if (window.UnifiedComparativeChartInstance) {
-          window.UnifiedComparativeChartInstance.resize();
-          if (window.OperationalStreamEngineInstance) {
-            const currentStation = window.OperationalStreamEngineInstance.activeStationId;
-            const buffer = window.OperationalStreamEngineInstance.stationBuffers?.[currentStation];
-            if (buffer) {
-              window.UnifiedComparativeChartInstance.updateData(buffer);
-            }
-          }
-        }
-      }, 60);
-    }
-  }
-
-  bindSimulations() {
-    const simNormal = document.getElementById('sim-btn-normal');
-    const simStorm = document.getElementById('sim-btn-storm');
-    const simFailure = document.getElementById('sim-btn-failure');
-
-    const setSimActive = (btn) => {
-      [simNormal, simStorm, simFailure].forEach(b => {
-        if (b) b.classList.remove('active-sim');
-      });
-      if (btn) btn.classList.add('active-sim');
-    };
-
-    if (simNormal) {
-      simNormal.addEventListener('click', () => {
-        setSimActive(simNormal);
-        if (window.OperationalStreamEngineInstance) {
-          window.OperationalStreamEngineInstance.setScenario('normal');
-        }
-      });
-    }
-
-    if (simStorm) {
-      simStorm.addEventListener('click', () => {
-        setSimActive(simStorm);
-        if (window.OperationalStreamEngineInstance) {
-          window.OperationalStreamEngineInstance.setScenario('storm');
-        }
-      });
-    }
-
-    if (simFailure) {
-      simFailure.addEventListener('click', () => {
-        setSimActive(simFailure);
-        if (window.OperationalStreamEngineInstance) {
-          window.OperationalStreamEngineInstance.setScenario('failure');
-        }
-      });
-    }
-  }
-
-  bindCursorToggle() {
-    const toggleBtn = document.getElementById('btn-toggle-cursor-mode');
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', () => {
-        if (window.ScientificCursorInstance) {
-          const isEnabled = window.ScientificCursorInstance.toggle();
-          toggleBtn.innerText = isEnabled ? 'Custom Cursor: On' : 'Custom Cursor: Off';
-          toggleBtn.style.color = isEnabled ? 'var(--brand-teal)' : 'var(--text-secondary)';
-        }
-      });
+        window.UnifiedComparativeChartInstance.resizeCanvas();
+      }, 50);
     }
   }
 }
 
-// Bootstrap Subsystems and Wire Live Telemetry Pipeline
+// Global Application Initialization Pipeline
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Scientific Cursor
-  if (typeof window.initScientificCursor === 'function') {
-    window.initScientificCursor();
+  // 1. Initialize Single-Page Router
+  window.AppRouter = new AppRouter();
+
+  // 2. Initialize Telemetry Stream Engine
+  if (typeof window.initStreamEngine === 'function') {
+    window.initStreamEngine();
   }
 
-  // 2. Multi-Sensor Comparative Chart
-  let chart = null;
+  // 3. Initialize Comparative Chart Renderer
   if (typeof window.initUnifiedChart === 'function') {
-    chart = window.initUnifiedChart();
+    window.initUnifiedChart();
   }
 
-  // 3. Subsystem Controllers
-  if (typeof window.initCommandCenter === 'function') window.initCommandCenter();
-  if (typeof window.initLiveNetwork === 'function') window.initLiveNetwork();
-  if (typeof window.initInvestigation === 'function') window.initInvestigation();
-  if (typeof window.initSensorHealthAnalytics === 'function') window.initSensorHealthAnalytics();
-  if (typeof window.initMaintenance === 'function') window.initMaintenance();
-  if (typeof window.initDataTrustLog === 'function') window.initDataTrustLog();
-
-  // 4. Master Application Router
-  window.AppRouter = new ApplicationRouter();
-
-  // 5. Explicitly Wire StreamEngine Subscription
-  if (window.OperationalStreamEngineInstance) {
-    // Pipe telemetry notifications directly to the chart render cycle
-    window.OperationalStreamEngineInstance.subscribe((payload) => {
-      const activeChart = window.UnifiedComparativeChartInstance || chart;
-      if (activeChart && payload && payload.buffer) {
-        activeChart.updateData(payload.buffer);
-      }
-    });
-
-    // Provide initial historical window if available
-    const stationId = window.OperationalStreamEngineInstance.activeStationId || 'AWS-JPR-04';
-    const initialBuffer = window.OperationalStreamEngineInstance.stationBuffers?.[stationId];
-    if (chart && initialBuffer) {
-      chart.updateData(initialBuffer);
-    }
-
-    // Start streaming loop
-    window.OperationalStreamEngineInstance.stop();
-    window.OperationalStreamEngineInstance.start();
+  // 4. Initialize Core Domain Controllers
+  if (typeof window.initCommandCenter === 'function') {
+    window.initCommandCenter();
   }
-
-  console.log('✅ SkyGuard AI — Weather Data Trust Intelligence Platform initialized.');
+  if (typeof window.initLiveNetwork === 'function') {
+    window.initLiveNetwork();
+  }
+  if (typeof window.initInvestigate === 'function') {
+    window.initInvestigate();
+  }
+  if (typeof window.initSensorHealth === 'function') {
+    window.initSensorHealth();
+  }
+  if (typeof window.initMaintenance === 'function') {
+    window.initMaintenance();
+  }
+  if (typeof window.initDataTrustLog === 'function') {
+    window.initDataTrustLog();
+  }
 });
