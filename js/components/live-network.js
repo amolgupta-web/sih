@@ -9,7 +9,7 @@ class LiveNetworkController {
     this.tableBody = document.getElementById('network-directory-tbody');
     this.mapSvg = document.getElementById('network-map-svg');
 
-    // Calibrated coordinates inside viewBox="0 0 420 340"
+    // Calibrated spatial coordinates inside viewBox="0 0 420 340"
     this.stations = [
       {
         id: 'AWS-JPR-04',
@@ -116,7 +116,6 @@ class LiveNetworkController {
   renderTopologyMap() {
     if (!this.mapSvg) return;
 
-    // ViewBox fitted to 420 x 340
     this.mapSvg.setAttribute('viewBox', '0 0 420 340');
 
     let svgContent = `
@@ -127,13 +126,13 @@ class LiveNetworkController {
       </defs>
       <rect width="100%" height="100%" fill="url(#mapGridPattern)" />
 
-      <!-- Inter-station Spatial Links -->
+      <!-- Inter-station Spatial Vectors -->
       <line x1="195" y1="65" x2="130" y2="135" stroke="#94A3B8" stroke-width="1.6" stroke-dasharray="4,4" />
       <line x1="130" y1="135" x2="215" y2="265" stroke="#94A3B8" stroke-width="1.6" stroke-dasharray="4,4" />
       <line x1="195" y1="65" x2="215" y2="265" stroke="#CBD5E1" stroke-width="1.2" stroke-dasharray="2,2" opacity="0.6" />
     `;
 
-    // Render Station Nodes
+    // Render Nodes
     this.stations.forEach((st) => {
       const isCritical = st.status === 'Critical';
       const isAttention = st.status === 'Attention';
@@ -162,28 +161,22 @@ class LiveNetworkController {
 
   bindEvents() {
     document.addEventListener('click', (e) => {
-      // 1. Table Investigate Button Click
+      // 1. Table Investigate Button Click -> Routes to Investigate with active station
       const inspectBtn = e.target.closest('.btn-inspect-station');
       if (inspectBtn) {
         const stationId = inspectBtn.dataset.stationId;
-        if (window.InvestigateControllerInstance) {
-          window.InvestigateControllerInstance.setStation(stationId);
-        }
         if (window.AppRouter) {
-          window.AppRouter.switchView('investigate');
+          window.AppRouter.switchView('investigate', stationId);
         }
         return;
       }
 
-      // 2. Topology Map Node Click
+      // 2. Topology Map Node Click -> Sets focal station and routes to Command Center
       const mapNode = e.target.closest('.map-node');
       if (mapNode) {
         const stationId = mapNode.dataset.stationId;
-        if (window.OperationalStreamEngineInstance) {
-          window.OperationalStreamEngineInstance.setStation(stationId);
-        }
         if (window.AppRouter) {
-          window.AppRouter.switchView('command-center');
+          window.AppRouter.switchView('command-center', stationId);
         }
       }
     });
