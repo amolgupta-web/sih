@@ -1,48 +1,51 @@
 /**
- * SkyGuard AI — Prioritized Operational Maintenance Queue
- * Translates AI anomaly verdicts into actionable P1/P2/P3 field engineering work orders.
+ * SkyGuard AI — Field Engineering & Maintenance Queue Controller
+ * Prioritizes field dispatches, sensor replacements, and calibration work orders
+ * across the primary station mesh.
  */
 
 class MaintenanceController {
   constructor() {
-    this.tableBody = document.getElementById('maintenance-tbody');
-
+    this.tbody = document.getElementById('maintenance-tbody');
     this.workOrders = [
       {
-        id: 'WO-801',
-        priority: 'P1',
-        pClass: 'p1',
-        station: 'AWS-JPR-04',
-        sensor: 'Temperature (PT100)',
-        issue: 'Critical Sensor Spike (55.2°C)',
-        confidence: 98,
-        action: 'Inspect wiring & replace ADC module',
-        urgency: 'Immediate (Today)',
-        status: 'Action Required'
+        id: 'WO-8801',
+        priority: 'P1 - Critical',
+        priorityClass: 'badge-critical',
+        stationId: 'AWS-JPR-04',
+        location: 'Jaipur (Semi-Arid)',
+        sensor: 'PT100 RTD Thermistor',
+        issue: 'Thermal Runaway Spike (+30°C in 15s, 55.2°C Registered)',
+        confidence: '98.4%',
+        action: 'Immediate field transducer inspection & ADC circuit replacement',
+        urgency: '< 4 Hours',
+        urgencyColor: 'var(--status-critical, #C94F4F)'
       },
       {
-        id: 'WO-802',
-        priority: 'P2',
-        pClass: 'p2',
-        station: 'AWS-DEL-07',
-        sensor: 'Humidity (Capacitive)',
-        issue: 'Gradual Calibration Drift (+18%)',
-        confidence: 91,
-        action: 'Perform salt chamber calibration',
-        urgency: 'Within 7 Days',
-        status: 'Scheduled'
+        id: 'WO-8802',
+        priority: 'P2 - Elevated',
+        priorityClass: 'badge-attention',
+        stationId: 'AWS-DEL-07',
+        location: 'New Delhi (Central)',
+        sensor: 'PV Auxiliary Bus & RH Transducer',
+        issue: 'Voltage Droop (10.8V) & Relative Humidity Calibration Drift (+18%)',
+        confidence: '88.1%',
+        action: 'Surface particulate soot cleaning & auxiliary battery swap',
+        urgency: '< 24 Hours',
+        urgencyColor: 'var(--status-attention, #C98A1C)'
       },
       {
-        id: 'WO-803',
-        priority: 'P3',
-        pClass: 'p3',
-        station: 'AWS-MUM-02',
-        sensor: 'Pressure (Barometer)',
-        issue: 'Acoustic / High-Frequency Noise',
-        confidence: 72,
-        action: 'Inspect inlet port for debris',
-        urgency: 'Next Cycle (14d)',
-        status: 'Monitoring'
+        id: 'WO-8803',
+        priority: 'P4 - Routine',
+        priorityClass: 'badge-trusted',
+        stationId: 'AWS-CHE-12',
+        location: 'Chennai (Marine Mesh)',
+        sensor: 'Piezoresistive Barometer',
+        issue: 'Routine Salt-Spray Desiccant Inspection',
+        confidence: '99.2%',
+        action: 'Quarterly preventative maintenance & seal check',
+        urgency: 'Scheduled (7 Days)',
+        urgencyColor: 'var(--text-secondary, #64748B)'
       }
     ];
 
@@ -51,56 +54,66 @@ class MaintenanceController {
 
   init() {
     this.render();
+    this.bindEvents();
   }
 
   render() {
-    if (!this.tableBody) return;
+    if (!this.tbody) return;
 
-    this.tableBody.innerHTML = this.workOrders.map(wo => `
-      <tr>
-        <td>
-          <span class="priority-badge ${wo.pClass}">${wo.priority}</span>
-        </td>
-        <td>
-          <strong style="font-family:var(--font-mono)">${wo.station}</strong>
-        </td>
-        <td>${wo.sensor}</td>
-        <td>
-          <span style="font-weight:600; color:${wo.priority === 'P1' ? 'var(--status-critical)' : 'var(--text-primary)'}">
-            ${wo.issue}
-          </span>
-        </td>
-        <td>
-          <strong>${wo.confidence}%</strong>
-        </td>
-        <td>${wo.action}</td>
-        <td>
-          <span style="font-size:0.75rem; font-weight:700; color:${wo.priority === 'P1' ? 'var(--status-critical)' : 'var(--text-secondary)'}">
-            ${wo.urgency}
-          </span>
-        </td>
-        <td>
-          <button class="btn-control btn-brand" onclick="window.MaintenanceControllerInstance.dispatchWorkOrder('${wo.id}')" style="font-size:0.72rem; padding:4px 8px">
-            Dispatch Team
-          </button>
-        </td>
-      </tr>
-    `).join('');
+    this.tbody.innerHTML = this.workOrders
+      .map((wo) => `
+        <tr data-order-id="${wo.id}">
+          <td>
+            <span class="trust-badge ${wo.priorityClass}" style="padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 0.72rem;">
+              ${wo.priority}
+            </span>
+          </td>
+          <td>
+            <div style="font-weight: 700; color: var(--text-primary);">${wo.stationId}</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary);">${wo.location}</div>
+          </td>
+          <td style="font-weight: 600; color: var(--text-primary);">${wo.sensor}</td>
+          <td style="font-size: 0.78rem; color: var(--text-secondary);">${wo.issue}</td>
+          <td style="font-weight: 700; color: var(--brand-teal);">${wo.confidence}</td>
+          <td style="font-size: 0.78rem; color: var(--text-primary); font-weight: 500;">${wo.action}</td>
+          <td style="font-weight: 700; color: ${wo.urgencyColor}; font-size: 0.78rem;">${wo.urgency}</td>
+          <td>
+            <button class="btn-control btn-xs btn-dispatch-action" data-order-id="${wo.id}" style="padding: 4px 10px; font-size: 0.75rem; cursor: pointer;">
+              Dispatch Order
+            </button>
+          </td>
+        </tr>
+      `)
+      .join('');
   }
 
-  dispatchWorkOrder(id) {
-    const item = this.workOrders.find(w => w.id === id);
-    if (item) {
-      item.status = 'Dispatched';
-      alert(`Work Order ${id} (${item.station}): Field maintenance team notified for ${item.action}.`);
-      this.render();
-    }
+  bindEvents() {
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-dispatch-action');
+      if (btn) {
+        const orderId = btn.dataset.orderId;
+        btn.textContent = 'Dispatched ✓';
+        btn.style.background = 'var(--brand-teal, #2E9B73)';
+        btn.style.color = '#ffffff';
+        btn.style.borderColor = 'var(--brand-teal, #2E9B73)';
+        btn.disabled = true;
+      }
+    });
   }
 }
 
+// Global Singleton Setup
 window.MaintenanceControllerInstance = null;
-window.initMaintenance = function() {
+
+window.initMaintenance = function () {
   if (!window.MaintenanceControllerInstance) {
     window.MaintenanceControllerInstance = new MaintenanceController();
   }
+  return window.MaintenanceControllerInstance;
 };
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => window.initMaintenance());
+} else {
+  window.initMaintenance();
+}
