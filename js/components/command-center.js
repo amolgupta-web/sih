@@ -1,260 +1,189 @@
 /**
  * SkyGuard AI — Command Center Controller
- * Synchronizes focal station telemetry, multi-station pills (Jaipur, Delhi, Chennai),
- * network trust metric displays, triage queue rendering, and action delegation.
+ * Coordinates the primary operational overview, Network Trust scoring,
+ * 3-station summary metrics, and prioritized Attention Queue triage.
  */
 
 class CommandCenterController {
   constructor() {
-    this.streamEngine = window.OperationalStreamEngineInstance || null;
-    this.unsubscribe = null;
+    this.queueItems = [
+      {
+        id: 'q-jpr',
+        stationId: 'AWS-JPR-04',
+        type: 'CRITICAL ANOMALY',
+        badgeClass: 'badge-critical',
+        desc: 'Single-channel thermistor surge to 55.2°C. Neighborhood spatial consensus rejected telemetry.',
+        confidence: '98.4%',
+        baseline: '25.4°C',
+        triaged: false
+      },
+      {
+        id: 'q-del',
+        stationId: 'AWS-DEL-07',
+        type: 'POWER DRIFT',
+        badgeClass: 'badge-attention',
+        desc: 'Photovoltaic output degraded below 11.2V envelope. Calibration drift likely within 12h.',
+        confidence: '88.1%',
+        baseline: '12.6V',
+        triaged: false
+      }
+    ];
 
     this.init();
   }
 
   init() {
-    this.bindControls();
-    this.subscribeToStream();
-    this.renderInitialState();
+    this.renderQueue();
+    this.bindPills();
+    this.bindActions();
   }
 
-  bindControls() {
-    document.addEventListener('click', (e) => {
-      // 1. Focal Station Quick-Switch Pills
-      const pill = e.target.closest('[data-station-id]');
-      if (pill) {
-        const stationId = pill.dataset.stationId;
-        if (stationId && window.OperationalStreamEngineInstance) {
-          window.OperationalStreamEngineInstance.setStation(stationId);
-          this.updateActivePill(stationId);
-        }
-        return;
-      }
+  renderQueue() {
+    const listEl = document.getElementById('cmd-attention-queue-list');
+    if (!listEl) return;
 
-      // 2. Triage Actions (Quarantine / Impute)
-      const actionBtn = e.target.closest('[data-action]');
-      if (actionBtn) {
-        const action = actionBtn.dataset.action;
-        const stationId = actionBtn.dataset.targetStation || 'AWS-JPR-04';
-        this.handleTriageAction(action, stationId);
-      }
-    });
-  }
+    listEl.innerHTML = this.queueItems
+      .map((item) => {
+        const isCritical = item.type === 'CRITICAL ANOMALY';
+        const isAttention = item.type === 'POWER DRIFT';
+        const headerColor = isCritical
+          ? 'var(--status-critical, #C94F4F)'
+          : isAttention
+          ? 'var(--status-attention, #C98A1C)'
+          : 'var(--status-trusted, #2E9B73)';
 
-  subscribeToStream() {
-    const bind = () => {
-      if (window.OperationalStreamEngineInstance) {
-        this.streamEngine = window.OperationalStreamEngineInstance;
-        this.unsubscribe = this.streamEngine.subscribe((payload) => {
-          this.updateView(payload);
-        });
-      } else {
-        setTimeout(bind, 100);
-      }
-    };
-    bind();
-  }
+        const borderColor = isCritical ? '#FED7D7' : isAttention ? '#FEEBC8' : '#DCFCE7';
+        const bgColor = isCritical ? '#FFF5F5' : isAttention ? '#FFFAF0' : '#F0FDF4';
 
-  renderInitialState() {
-    if (!this.streamEngine) return;
-    const activeId = this.streamEngine.activeStationId || 'AWS-JPR-04';
-    const station = this.streamEngine.stations[activeId];
-    const buffer = this.streamEngine.stationBuffers?.[activeId];
+        return `
+          <div class="queue-card" id="${item.id}" style="background:#ffffff; border:1px solid ${borderColor}; border-left:4px solid ${headerColor}; border-radius:6px; padding:12px; display:flex; flex-direction:column; gap:8px; margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="trust-badge" style="background:${bgColor}; color:${headerColor}; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px;">
+                ${item.type}
+              </span>
+              <strong style="font-family:var(--font-mono); font-size:11px; color:var(--text-primary);">${item.stationId}</strong>
+            </div>
 
-    this.updateActivePill(activeId);
-    if (station && buffer) {
-      this.updateView({
-        reading: {
-          stationId: activeId,
-          stationName: station.name,
-          temp: buffer.temp[buffer.temp.length - 1] ?? station.baseTemp,
-          humidity: buffer.humidity[buffer.humidity.length - 1] ?? station.baseHum,
-          pressure: buffer.pressure[buffer.pressure.length - 1] ?? station.basePress
-        },
-        analysis: {
-          isAnomaly: activeId === 'AWS-JPR-04' && this.streamEngine.activeScenario === 'failure',
-          confidence: 0.98,
-          imputedVal: 25.4,
-          trustScore: station.trust
-        },
-        buffer,
-        stationId: activeId,
-        scenario: this.streamEngine.activeScenario,
-        stations: this.streamEngine.stations,
-        networkTrust: this.streamEngine.activeScenario === 'failure' ? 86 : 96
-      });
-    }
-  }
+            <p style="font-size:0.75rem; color:var(--text-secondary); margin:0; line-height:1.4;">
+              ${item.desc}
+            </p>
 
-  updateView(data) {
-    if (!data) return;
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; color:var(--text-secondary);">
+              <span>Confidence: <strong style="color:var(--text-primary);">${item.confidence}</strong></span>
+              <span>AI Target: <strong style="color:var(--brand-teal);">${item.baseline}</strong></span>
+            </div>
 
-    this.updateTrustMetrics(data);
-    this.updateStationKPIs(data);
-    this.updateTriageQueue(data);
-    if (data.stationId) {
-      this.updateActivePill(data.stationId);
-    }
-  }
-
-  updateTrustMetrics(data) {
-    const scoreEl = document.getElementById('cmd-trust-score');
-    const barEl = document.getElementById('cmd-trust-bar') || document.getElementById('cmd-trust-progress-bar');
-    const badgeEl = document.getElementById('cmd-trust-badge');
-
-    // Resilient network score: 86 on isolated single-sensor failure, 96 nominal
-    const score = data.networkTrust ?? (data.scenario === 'failure' ? 86 : 96);
-
-    if (scoreEl) {
-      scoreEl.innerHTML = `${score} <span>/ 100</span>`;
-    }
-
-    if (barEl) {
-      barEl.style.width = `${score}%`;
-      barEl.style.backgroundColor = score >= 85 ? 'var(--brand-teal, #2E9B73)' : 'var(--brand-amber, #C98A1C)';
-    }
-
-    if (badgeEl) {
-      if (score >= 85) {
-        badgeEl.textContent = 'HIGH FIDELITY';
-        badgeEl.className = 'status-badge status-healthy';
-      } else {
-        badgeEl.textContent = 'DEGRADATION MONITORED';
-        badgeEl.className = 'status-badge status-warning';
-      }
-    }
-  }
-
-  updateStationKPIs(data) {
-    const reading = data.reading || {};
-    const stationTitleEl = document.getElementById('cmd-active-station-name');
-    const alertTagEl = document.getElementById('cmd-chart-alert-tag');
-
-    if (stationTitleEl && (reading.stationName || data.stationName)) {
-      const name = reading.stationName || data.stationName;
-      const id = reading.stationId || data.stationId;
-      stationTitleEl.textContent = `${id} (${name})`;
-    }
-
-    if (alertTagEl) {
-      const hasAnomaly = data.analysis && data.analysis.isAnomaly;
-      if (hasAnomaly) {
-        alertTagEl.textContent = '• 1 Anomaly Flagged at 14:32:15';
-        alertTagEl.style.display = 'inline';
-      } else {
-        alertTagEl.textContent = '• Nominal Signal Flow';
-        alertTagEl.style.display = 'none';
-      }
-    }
-  }
-
-  updateTriageQueue(data) {
-    const triageContainer =
-      document.getElementById('cmd-attention-queue-list') ||
-      document.getElementById('cmd-triage-list') ||
-      document.querySelector('.queue-items-list');
-
-    if (!triageContainer) return;
-
-    const isFailure = data.scenario === 'failure' || (data.analysis && data.analysis.isAnomaly);
-
-    if (isFailure) {
-      triageContainer.innerHTML = `
-        <div class="triage-card triage-critical" style="background:#FFF5F5; border:1px solid #FED7D7; border-left:4px solid #C94F4F; border-radius:8px; padding:14px; margin-bottom:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <span style="background:#C94F4F; color:#fff; font-size:10px; font-weight:700; padding:2px 8px; border-radius:4px; letter-spacing:0.5px;">CRITICAL ANOMALY</span>
-            <span style="font-size:12px; font-weight:700; color:#17201E;">AWS-JPR-04</span>
+            ${
+              !item.triaged && isCritical
+                ? `
+              <div style="display:flex; gap:8px; margin-top:4px;">
+                <button class="btn-control btn-xs btn-quarantine" data-id="${item.id}" style="flex:1; padding:4px 0; font-size:11px;">
+                  Quarantine Channel
+                </button>
+                <button class="btn-control btn-xs btn-brand btn-apply-baseline" data-id="${item.id}" style="flex:1; padding:4px 0; font-size:11px;">
+                  Apply AI Baseline
+                </button>
+              </div>
+            `
+                : ''
+            }
           </div>
-          <p style="font-size:12px; color:#4A5568; margin:0 0 10px 0; line-height:1.4;">
-            Single-channel thermistor surge to 55.2°C. Neighborhood spatial consensus rejected telemetry.
-          </p>
-          <div style="display:flex; gap:14px; font-size:11px; color:#718096; margin-bottom:12px;">
-            <span>Confidence: <strong style="color:#C94F4F;">98.4%</strong></span>
-            <span>AI Baseline: <strong style="color:#2E9B73;">25.4°C</strong></span>
-          </div>
-          <div style="display:flex; gap:8px;">
-            <button class="btn-xs btn-control" data-action="quarantine" data-target-station="AWS-JPR-04" style="background:#fff; border:1px solid #CBD5E0; padding:6px 10px; font-size:11px; font-weight:600; border-radius:4px; cursor:pointer; color:#17201E;">Quarantine Channel</button>
-            <button class="btn-xs btn-brand" data-action="approve-impute" data-target-station="AWS-JPR-04" style="background:#2E9B73; color:#fff; border:none; padding:6px 10px; font-size:11px; font-weight:600; border-radius:4px; cursor:pointer;">Apply AI Baseline</button>
-          </div>
-        </div>
-
-        <div class="triage-card triage-warning" style="background:#FFFAF0; border:1px solid #FEEBC8; border-left:4px solid #C98A1C; border-radius:8px; padding:14px; margin-bottom:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <span style="background:#C98A1C; color:#fff; font-size:10px; font-weight:700; padding:2px 8px; border-radius:4px; letter-spacing:0.5px;">POWER DRIFT</span>
-            <span style="font-size:12px; font-weight:700; color:#17201E;">AWS-DEL-07</span>
-          </div>
-          <p style="font-size:12px; color:#4A5568; margin:0; line-height:1.4;">
-            Photovoltaic output degraded below 11.2V envelope. Calibration drift likely within 12h.
-          </p>
-        </div>
-
-        <div class="triage-card triage-info" style="background:#F8FAFC; border:1px solid #E2E8F0; border-left:4px solid #3B82F6; border-radius:8px; padding:14px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <span style="background:#3B82F6; color:#fff; font-size:10px; font-weight:700; padding:2px 8px; border-radius:4px; letter-spacing:0.5px;">STATION DIAGNOSTIC</span>
-            <span style="font-size:12px; font-weight:700; color:#17201E;">AWS-MUM-02</span>
-          </div>
-          <p style="font-size:12px; color:#4A5568; margin:0; line-height:1.4;">
-            Barometric pressure noise variance elevated by 18%. Telemetry tagged for observation.
-          </p>
-        </div>
-      `;
-    } else {
-      triageContainer.innerHTML = `
-        <div style="background:#F0FDF4; border:1px solid #DCFCE7; border-left:4px solid #2E9B73; border-radius:8px; padding:14px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span style="background:#2E9B73; color:#fff; font-size:10px; font-weight:700; padding:2px 8px; border-radius:4px;">NOMINAL</span>
-            <span style="font-size:12px; font-weight:700; color:#17201E;">Mesonet Active</span>
-          </div>
-          <p style="font-size:12px; color:#4A5568; margin:0; line-height:1.4;">All 24 mesonet sensor nodes verified healthy within tolerance envelopes. Zero active quarantines.</p>
-        </div>
-      `;
-    }
+        `;
+      })
+      .join('');
   }
 
-  updateActivePill(stationId) {
-    const pills = document.querySelectorAll('[data-station-id]');
+  bindPills() {
+    const pills = document.querySelectorAll('.station-pill-btn');
     pills.forEach((pill) => {
-      if (pill.dataset.stationId === stationId) {
+      pill.addEventListener('click', () => {
+        pills.forEach((p) => p.classList.remove('active'));
         pill.classList.add('active');
-      } else {
-        pill.classList.remove('active');
-      }
+
+        const stId = pill.dataset.stationId;
+        if (window.OperationalStreamEngineInstance) {
+          window.OperationalStreamEngineInstance.setStation(stId);
+        }
+
+        const names = {
+          'AWS-JPR-04': 'AWS-JPR-04 (Jaipur Semi-Arid Grid)',
+          'AWS-DEL-07': 'AWS-DEL-07 (Delhi Urban Heat Corridor)',
+          'AWS-CHE-12': 'AWS-CHE-12 (Chennai Coastal Marine Mesh)'
+        };
+
+        const activeNameEl = document.getElementById('cmd-active-station-name');
+        const alertTagEl = document.getElementById('cmd-chart-alert-tag');
+
+        if (activeNameEl) {
+          activeNameEl.textContent = names[stId] || stId;
+        }
+
+        if (alertTagEl) {
+          if (stId === 'AWS-JPR-04') {
+            alertTagEl.style.display = 'inline';
+            alertTagEl.textContent = '• 1 Anomaly Flagged at 14:32:15';
+            alertTagEl.style.color = 'var(--status-critical)';
+          } else if (stId === 'AWS-DEL-07') {
+            alertTagEl.style.display = 'inline';
+            alertTagEl.textContent = '• Attention: Voltage Droop at 12:15';
+            alertTagEl.style.color = 'var(--status-attention)';
+          } else {
+            alertTagEl.style.display = 'inline';
+            alertTagEl.textContent = '• Nominal Spatial Consensus';
+            alertTagEl.style.color = 'var(--status-trusted)';
+          }
+        }
+      });
     });
   }
 
-  handleTriageAction(action, stationId) {
-    if (action === 'approve-impute') {
-      const scoreEl = document.getElementById('cmd-trust-score');
-      const barEl = document.getElementById('cmd-trust-bar') || document.getElementById('cmd-trust-progress-bar');
-      if (scoreEl) scoreEl.innerHTML = `96 <span>/ 100</span>`;
-      if (barEl) {
-        barEl.style.width = '96%';
-        barEl.style.backgroundColor = 'var(--brand-teal, #2E9B73)';
-      }
-      if (window.UnifiedComparativeChartInstance) {
-        window.UnifiedComparativeChartInstance.render();
-      }
-    } else if (action === 'quarantine') {
-      if (window.OperationalStreamEngineInstance) {
-        window.OperationalStreamEngineInstance.setScenario('normal');
-      }
-    }
-  }
+  bindActions() {
+    document.addEventListener('click', (e) => {
+      const applyBtn = e.target.closest('.btn-apply-baseline');
+      if (applyBtn) {
+        const itemId = applyBtn.dataset.id;
+        const item = this.queueItems.find((q) => q.id === itemId);
+        if (item) {
+          item.triaged = true;
+          item.type = 'IMPUTATION ACTIVE';
+          item.desc = 'Raw 55.2°C isolated from NWP stream. Synthetic 25.4°C baseline applied.';
+          this.renderQueue();
 
-  destroy() {
-    if (this.unsubscribe) {
-      this.unsubscribe();
-      this.unsubscribe = null;
-    }
+          const trustScoreEl = document.getElementById('cmd-trust-score');
+          const trustBarEl = document.getElementById('cmd-trust-bar');
+          const statAttention = document.getElementById('stat-attention-required');
+          const statTrusted = document.getElementById('stat-trusted-pct');
+
+          if (trustScoreEl) trustScoreEl.innerHTML = '96.4 <span>/ 100</span>';
+          if (trustBarEl) trustBarEl.style.width = '96.4%';
+          if (statAttention) statAttention.textContent = '01';
+          if (statTrusted) statTrusted.textContent = '88.9%';
+        }
+      }
+
+      const qBtn = e.target.closest('.btn-quarantine');
+      if (qBtn) {
+        const itemId = qBtn.dataset.id;
+        const item = this.queueItems.find((q) => q.id === itemId);
+        if (item) {
+          item.triaged = true;
+          item.type = 'CHANNEL QUARANTINED';
+          item.desc = 'Channel silenced. Maintenance ticket dispatched for field replacement.';
+          this.renderQueue();
+        }
+      }
+    });
   }
 }
 
-// Global Singleton Setup
 window.CommandCenterControllerInstance = null;
 
 window.initCommandCenter = function () {
   if (!window.CommandCenterControllerInstance) {
     window.CommandCenterControllerInstance = new CommandCenterController();
+  } else {
+    // Force re-render in case DOM element was not ready initially
+    window.CommandCenterControllerInstance.renderQueue();
   }
   return window.CommandCenterControllerInstance;
 };
