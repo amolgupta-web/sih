@@ -1,12 +1,11 @@
 /**
- * SkyGuard AI — Command Center Operational Controller
- * Manages live telemetry KPIs, network data trust gauges, active attention queue,
- * station quick-switch selectors, and real-time comparative chart integration.
+ * SkyGuard AI — Command Center Controller
+ * Synchronizes focal station telemetry, multi-station pills (Jaipur, Delhi, Chennai),
+ * network trust metric displays, triage queue rendering, and action delegation.
  */
 
 class CommandCenterController {
   constructor() {
-    this.container = document.getElementById('view-command-center');
     this.streamEngine = window.OperationalStreamEngineInstance || null;
     this.unsubscribe = null;
 
@@ -20,9 +19,8 @@ class CommandCenterController {
   }
 
   bindControls() {
-    // Global event delegation on container
     document.addEventListener('click', (e) => {
-      // Station selector buttons
+      // 1. Focal Station Quick-Switch Pills
       const pill = e.target.closest('[data-station-id]');
       if (pill) {
         const stationId = pill.dataset.stationId;
@@ -33,7 +31,7 @@ class CommandCenterController {
         return;
       }
 
-      // Attention Queue Triage buttons (Quarantine / Impute)
+      // 2. Triage Actions (Quarantine / Impute)
       const actionBtn = e.target.closest('[data-action]');
       if (actionBtn) {
         const action = actionBtn.dataset.action;
@@ -82,7 +80,8 @@ class CommandCenterController {
         buffer,
         stationId: activeId,
         scenario: this.streamEngine.activeScenario,
-        stations: this.streamEngine.stations
+        stations: this.streamEngine.stations,
+        networkTrust: this.streamEngine.activeScenario === 'failure' ? 86 : 96
       });
     }
   }
@@ -103,27 +102,18 @@ class CommandCenterController {
     const barEl = document.getElementById('cmd-trust-bar') || document.getElementById('cmd-trust-progress-bar');
     const badgeEl = document.getElementById('cmd-trust-badge');
 
-    // Resilient Network Scoring:
-    // A single faulty sensor in a 24-station mesonet only drops network score to 86/100, not 69/100
-    let score;
-    if (data.scenario === 'failure') {
-      score = 86; // Monitored network status with single-channel anomaly
-    } else {
-      score = 96; // Fully trusted, high fidelity state
-    }
+    // Resilient network score: 86 on isolated single-sensor failure, 96 nominal
+    const score = data.networkTrust ?? (data.scenario === 'failure' ? 86 : 96);
 
-    // 1. Update Trust Score Display
     if (scoreEl) {
       scoreEl.innerHTML = `${score} <span>/ 100</span>`;
     }
 
-    // 2. Update Progress Bar
     if (barEl) {
       barEl.style.width = `${score}%`;
       barEl.style.backgroundColor = score >= 85 ? 'var(--brand-teal, #2E9B73)' : 'var(--brand-amber, #C98A1C)';
     }
 
-    // 3. Optional Status Badge update
     if (badgeEl) {
       if (score >= 85) {
         badgeEl.textContent = 'HIGH FIDELITY';
@@ -137,33 +127,32 @@ class CommandCenterController {
 
   updateStationKPIs(data) {
     const reading = data.reading || {};
-
-    const tempEl = document.getElementById('kpi-temp-val');
-    const humEl = document.getElementById('kpi-hum-val');
-    const pressEl = document.getElementById('kpi-press-val');
     const stationTitleEl = document.getElementById('cmd-active-station-name');
+    const alertTagEl = document.getElementById('cmd-chart-alert-tag');
 
-    if (tempEl && reading.temp !== undefined) {
-      tempEl.textContent = `${Number(reading.temp).toFixed(1)}°C`;
+    if (stationTitleEl && (reading.stationName || data.stationName)) {
+      const name = reading.stationName || data.stationName;
+      const id = reading.stationId || data.stationId;
+      stationTitleEl.textContent = `${id} (${name})`;
     }
-    if (humEl && reading.humidity !== undefined) {
-      humEl.textContent = `${Number(reading.humidity).toFixed(1)}%`;
-    }
-    if (pressEl && reading.pressure !== undefined) {
-      pressEl.textContent = `${Number(reading.pressure).toFixed(1)} hPa`;
-    }
-    if (stationTitleEl && reading.stationName) {
-      stationTitleEl.textContent = `${reading.stationName} (${reading.stationId || this.streamEngine?.activeStationId})`;
+
+    if (alertTagEl) {
+      const hasAnomaly = data.analysis && data.analysis.isAnomaly;
+      if (hasAnomaly) {
+        alertTagEl.textContent = '• 1 Anomaly Flagged at 14:32:15';
+        alertTagEl.style.display = 'inline';
+      } else {
+        alertTagEl.textContent = '• Nominal Signal Flow';
+        alertTagEl.style.display = 'none';
+      }
     }
   }
 
   updateTriageQueue(data) {
-    // 1. Query for container matching both original and updated index.html IDs
     const triageContainer =
       document.getElementById('cmd-attention-queue-list') ||
       document.getElementById('cmd-triage-list') ||
-      document.querySelector('.queue-items-list') ||
-      document.querySelector('.queue-panel-card .queue-items-container');
+      document.querySelector('.queue-items-list');
 
     if (!triageContainer) return;
 
@@ -177,7 +166,7 @@ class CommandCenterController {
             <span style="font-size:12px; font-weight:700; color:#17201E;">AWS-JPR-04</span>
           </div>
           <p style="font-size:12px; color:#4A5568; margin:0 0 10px 0; line-height:1.4;">
-            Single-channel thermistor surge to 55.2°C. Spatial consensus rejected telemetry.
+            Single-channel thermistor surge to 55.2°C. Neighborhood spatial consensus rejected telemetry.
           </p>
           <div style="display:flex; gap:14px; font-size:11px; color:#718096; margin-bottom:12px;">
             <span>Confidence: <strong style="color:#C94F4F;">98.4%</strong></span>
@@ -235,7 +224,6 @@ class CommandCenterController {
 
   handleTriageAction(action, stationId) {
     if (action === 'approve-impute') {
-      // 1. Immediately update Network Trust Score to near perfect
       const scoreEl = document.getElementById('cmd-trust-score');
       const barEl = document.getElementById('cmd-trust-bar') || document.getElementById('cmd-trust-progress-bar');
       if (scoreEl) scoreEl.innerHTML = `96 <span>/ 100</span>`;
@@ -243,13 +231,10 @@ class CommandCenterController {
         barEl.style.width = '96%';
         barEl.style.backgroundColor = 'var(--brand-teal, #2E9B73)';
       }
-
-      // 2. Redraw chart with clean baseline
       if (window.UnifiedComparativeChartInstance) {
         window.UnifiedComparativeChartInstance.render();
       }
     } else if (action === 'quarantine') {
-      // Quarantine the station and return engine to normal telemetry loop
       if (window.OperationalStreamEngineInstance) {
         window.OperationalStreamEngineInstance.setScenario('normal');
       }
@@ -274,7 +259,6 @@ window.initCommandCenter = function () {
   return window.CommandCenterControllerInstance;
 };
 
-// Bootstrap when DOM ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => window.initCommandCenter());
 } else {
