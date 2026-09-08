@@ -1405,3 +1405,111 @@ body.custom-cursor-active * {
     grid-template-columns: 1fr;
   }
 }
+/* ==========================================================================
+   FOCAL STATION SWITCHER (BEAUTIFIED PILLS)
+   ========================================================================== */
+.focal-station-switcher {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 14px 0;
+  padding: 6px 10px;
+  background: rgba(248, 250, 252, 0.85);
+  border: 1px solid var(--border-light, #e2e8f0);
+  border-radius: 8px;
+}
+
+.switcher-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary, #64748b);
+  padding-right: 6px;
+  border-right: 1px solid var(--border-light, #e2e8f0);
+}
+
+.station-pill-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.station-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.station-pill-btn:hover {
+  border-color: #94a3b8;
+  color: #0f172a;
+  background: #f8fafc;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+.station-pill-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Active State */
+.station-pill-btn.active {
+  background: #17201e;
+  border-color: #17201e;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(23, 32, 30, 0.25);
+}
+
+.station-pill-btn.active .pill-station-id {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* Internal Pill Typography & Indicator */
+.pill-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2e9b73;
+  box-shadow: 0 0 0 2px rgba(46, 155, 115, 0.2);
+  transition: background-color 0.2s ease;
+}
+
+.station-pill-btn[data-station-id="AWS-JPR-04"] .pill-status-dot {
+  background: #d9534f;
+  box-shadow: 0 0 0 2px rgba(217, 83, 79, 0.2);
+}
+
+.station-pill-btn.active .pill-status-dot {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+.pill-city-name {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.pill-station-id {
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 500;
+  transition: color 0.18s ease;
+}
