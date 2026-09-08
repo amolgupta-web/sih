@@ -133,7 +133,6 @@
                   <span style="display:inline-block; width:12px; height:2px; background:#2E9B73; border-top:2px dashed #2E9B73"></span>
                   <span style="color:#2E9B73">AI Baseline (Expected)</span>
                 </div>
-                <!-- Plain-Language Normal Range Badge -->
                 <div class="channel-tag normal-range-tag" title="The safe green zone shows the temperature you would normally expect at this time of day based on past weather history.">
                   <span class="channel-band-swatch"></span>
                   <span style="font-weight:600; color:var(--brand-teal);">Normal Daily Range (Safe Zone)</span>
@@ -514,11 +513,16 @@
           </button>
         </div>
 
-        <div class="trust-log-layout">
-          <div class="trust-log-filter-bar" style="margin-bottom:12px;">
-            <input type="text" id="trust-log-search" class="search-input-box" placeholder="Search by station, sensor, or status..." style="padding:6px 12px; border:1px solid var(--border-light); border-radius:4px; width:280px;">
+        <!-- Enclosed Card Surface with Enhanced Contrast & Search Shell -->
+        <div class="maintenance-table-card" style="padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <input type="text" id="trust-log-search" class="search-input-box" placeholder="🔍 Search station, parameter, or status..." style="padding: 7px 12px; border: 1px solid var(--border-light); border-radius: var(--radius-sm); width: 320px; font-size: 0.8rem;">
+            <span style="font-size: 0.74rem; color: var(--text-secondary); font-weight: 500;">
+              Showing <strong>5 of 5</strong> Cryptographically Verifiable Entries
+            </span>
           </div>
-          <div class="maintenance-table-card">
+
+          <div style="border: 1px solid var(--border-light); border-radius: var(--radius-sm); overflow: hidden;">
             <table class="data-table">
               <thead>
                 <tr>
