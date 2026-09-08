@@ -1,189 +1,230 @@
 /**
  * SkyGuard AI — Unified Comparative Chart Canvas Engine
- * High-performance lightweight 2D canvas chart renderer for real-time
- * multi-sensor streams, diurnal expectation bands, and anomaly flag pins.
+ * Pure HTML5 Canvas 2D engine supporting interactive factor toggles
+ * (Temperature, Humidity, Pressure, AI Baseline, and Normal Daily Envelope).
  */
 
 class UnifiedComparativeChart {
   constructor() {
     this.canvas = document.getElementById('unified-comparative-canvas');
     if (!this.canvas) return;
-
     this.ctx = this.canvas.getContext('2d');
-    this.data = null;
-    this.activeChannels = {
+
+    this.visibleLayers = {
       temp: true,
-      humidity: true,
-      pressure: true,
-      imputed: true
+      hum: false,
+      press: false,
+      baseline: true,
+      envelope: true
     };
 
-    this.padding = { top: 28, right: 36, bottom: 32, left: 44 };
-    this.init();
+    this.initToggles();
+    this.bindWindowResize();
+    
+    // Initial delay to ensure DOM layout is complete
+    setTimeout(() => this.resizeCanvas(), 50);
   }
 
-  init() {
-    this.resizeCanvas();
+  initToggles() {
+    const bindToggle = (id, key) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.checked = this.visibleLayers[key];
+        el.addEventListener('change', (e) => {
+          this.visibleLayers[key] = e.target.checked;
+          this.render();
+        });
+      }
+    };
+
+    bindToggle('toggle-temp', 'temp');
+    bindToggle('toggle-hum', 'hum');
+    bindToggle('toggle-press', 'press');
+    bindToggle('toggle-baseline', 'baseline');
+    bindToggle('toggle-envelope', 'envelope');
+  }
+
+  bindWindowResize() {
     window.addEventListener('resize', () => this.resizeCanvas());
-    this.bindTimeframeControls();
   }
 
   resizeCanvas() {
     if (!this.canvas) return;
-    const rect = this.canvas.parentElement.getBoundingClientRect();
+    const parent = this.canvas.parentElement;
+    if (!parent) return;
+
+    const width = parent.clientWidth || 600;
+    const height = 320;
     const dpr = window.devicePixelRatio || 1;
 
-    this.canvas.width = rect.width * dpr;
-    this.canvas.height = (rect.height || 320) * dpr;
-    this.canvas.style.width = `${rect.width}px`;
-    this.canvas.style.height = `${rect.height || 320}px`;
+    this.canvas.width = width * dpr;
+    this.canvas.height = height * dpr;
+    this.canvas.style.width = `${width}px`;
+    this.canvas.style.height = `${height}px`;
 
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.scale(dpr, dpr);
-    this.render();
-  }
 
-  bindTimeframeControls() {
-    const btns = document.querySelectorAll('.timeframe-btn');
-    btns.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        btns.forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.render();
-      });
-    });
-  }
-
-  updateData(buffer) {
-    this.data = buffer;
     this.render();
   }
 
   render() {
     if (!this.canvas || !this.ctx) return;
-    const width = parseFloat(this.canvas.style.width);
-    const height = parseFloat(this.canvas.style.height);
-    const ctx = this.ctx;
 
+    const stream = window.OperationalStreamEngineInstance;
+    const stId = stream ? stream.activeStation : 'AWS-JPR-04';
+    const buffer = stream ? stream.getBuffer(stId) : [];
+
+    const width = parseFloat(this.canvas.style.width) || 600;
+    const height = parseFloat(this.canvas.style.height) || 320;
+
+    const ctx = this.ctx;
     ctx.clearRect(0, 0, width, height);
 
-    if (!this.data || !this.data.temp || this.data.temp.length === 0) {
-      this.drawEmptyState(width, height);
-      return;
-    }
+    const pad = { top: 25, right: 35, bottom: 30, left: 45 };
+    const plotW = width - pad.left - pad.right;
+    const plotH = height - pad.top - pad.bottom;
 
-    const plotW = width - this.padding.left - this.padding.right;
-    const plotH = height - this.padding.top - this.padding.bottom;
+    const tempScale = { min: 15, max: 60 };
+    const humScale = { min: 20, max: 100 };
+    const pressScale = { min: 990, max: 1030 };
 
-    // Determine Temperature Scale
-    const minTemp = 15;
-    const maxTemp = 60;
-
-    const getY = (val) => {
-      const clamped = Math.max(minTemp, Math.min(maxTemp, val));
-      const ratio = (clamped - minTemp) / (maxTemp - minTemp);
-      return this.padding.top + plotH - ratio * plotH;
+    const getY = (val, scale) => {
+      const ratio = (val - scale.min) / (scale.max - scale.min);
+      return pad.top + plotH - Math.max(0, Math.min(1, ratio)) * plotH;
     };
 
-    const getX = (idx, total) => {
-      return this.padding.left + (idx / (total - 1)) * plotW;
-    };
+    const getX = (idx, total) => pad.left + (idx / Math.max(1, total - 1)) * plotW;
 
-    // 1. Draw Grid Lines and Y-Axis Scale
-    this.drawGrid(ctx, width, height, plotW, plotH, minTemp, maxTemp, getY);
+    // 1. Grid Lines & Y-Axis Labels
+    ctx.strokeStyle = 'rgba(226, 232, 240, 0.8)';
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = '10px Inter, sans-serif';
+    ctx.textAlign = 'right';
 
-    // 2. Draw Diurnal Tolerance Band (Green Shaded Envelope: 22°C - 28°C)
-    const bandTop = getY(27.5);
-    const bandBottom = getY(22.0);
-    ctx.fillStyle = 'rgba(46, 155, 115, 0.08)';
-    ctx.fillRect(this.padding.left, bandTop, plotW, bandBottom - bandTop);
-
-    // 3. Draw AI Imputed Baseline Reference Line (25.4°C)
-    const imputedY = getY(25.4);
-    ctx.strokeStyle = '#2E9B73';
-    ctx.lineWidth = 1.8;
-    ctx.setLineDash([5, 5]);
-    ctx.beginPath();
-    ctx.moveTo(this.padding.left, imputedY);
-    ctx.lineTo(this.padding.left + plotW, imputedY);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // 4. Draw Temperature Line & Anomaly Pins
-    const totalPts = this.data.temp.length;
-    ctx.lineWidth = 2.4;
-    ctx.strokeStyle = '#D9534F';
-    ctx.beginPath();
-
-    this.data.temp.forEach((val, i) => {
-      const x = getX(i, totalPts);
-      const y = getY(val);
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-
-    // 5. Draw Points and Anomaly Badges
-    this.data.temp.forEach((val, i) => {
-      const x = getX(i, totalPts);
-      const y = getY(val);
-      const isAnomaly = val > 48.0 || (this.data.anomalies && this.data.anomalies.includes(i));
-
+    const steps = 4;
+    for (let i = 0; i <= steps; i++) {
+      const val = tempScale.min + (i / steps) * (tempScale.max - tempScale.min);
+      const y = getY(val, tempScale);
       ctx.beginPath();
-      ctx.arc(x, y, isAnomaly ? 5 : 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = isAnomaly ? '#D9534F' : '#ffffff';
-      ctx.fill();
-      ctx.lineWidth = 1.6;
-      ctx.strokeStyle = '#D9534F';
+      ctx.moveTo(pad.left, y);
+      ctx.lineTo(pad.left + plotW, y);
       ctx.stroke();
 
-      if (isAnomaly && (i % 2 === 0 || i === totalPts - 1)) {
-        ctx.fillStyle = '#D9534F';
-        ctx.font = 'bold 9px "Inter", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('ANOMALY', x, y - 10);
+      if (this.visibleLayers.temp) {
+        ctx.fillText(`${val.toFixed(0)}°`, pad.left - 6, y + 3.5);
       }
-    });
+    }
 
-    // 6. Draw Timestamps on X-Axis
-    if (this.data.timestamps) {
+    // 2. Normal Daily Range (Safe Zone Envelope)
+    if (this.visibleLayers.envelope) {
+      const envTopY = getY(28.5, tempScale);
+      const envBotY = getY(22.0, tempScale);
+
+      ctx.fillStyle = 'rgba(46, 155, 115, 0.08)';
+      ctx.fillRect(pad.left, envTopY, plotW, envBotY - envTopY);
+
+      ctx.strokeStyle = 'rgba(46, 155, 115, 0.35)';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(pad.left, envTopY);
+      ctx.lineTo(pad.left + plotW, envTopY);
+      ctx.moveTo(pad.left, envBotY);
+      ctx.lineTo(pad.left + plotW, envBotY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // 3. AI Baseline Imputation
+    if (this.visibleLayers.baseline) {
+      const baseVal = stId === 'AWS-CHE-12' ? 31.8 : 25.4;
+      const baseY = getY(baseVal, tempScale);
+
+      ctx.strokeStyle = '#2E9B73';
+      ctx.lineWidth = 1.8;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(pad.left, baseY);
+      ctx.lineTo(pad.left + plotW, baseY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    if (!buffer || buffer.length === 0) return;
+
+    // 4. Humidity Curve
+    if (this.visibleLayers.hum) {
+      ctx.strokeStyle = '#3B82F6';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      buffer.forEach((pt, idx) => {
+        const x = getX(idx, buffer.length);
+        const y = getY(pt.humidity || 50, humScale);
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+
+    // 5. Pressure Curve
+    if (this.visibleLayers.press) {
+      ctx.strokeStyle = '#C98A1C';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      buffer.forEach((pt, idx) => {
+        const x = getX(idx, buffer.length);
+        const y = getY(pt.pressure || 1010, pressScale);
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+
+    // 6. Temperature Curve & Anomaly Flags
+    if (this.visibleLayers.temp) {
+      ctx.strokeStyle = stId === 'AWS-JPR-04' ? '#D9534F' : '#2E9B73';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      buffer.forEach((pt, idx) => {
+        const x = getX(idx, buffer.length);
+        const y = getY(pt.temperature, tempScale);
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // Points and Anomaly Pins
+      buffer.forEach((pt, idx) => {
+        const x = getX(idx, buffer.length);
+        const y = getY(pt.temperature, tempScale);
+
+        ctx.beginPath();
+        ctx.arc(x, y, pt.isAnomaly ? 4.5 : 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = pt.isAnomaly ? '#D9534F' : '#ffffff';
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = pt.isAnomaly ? '#D9534F' : '#2E9B73';
+        ctx.stroke();
+
+        if (pt.isAnomaly && idx % 3 === 0) {
+          ctx.fillStyle = '#D9534F';
+          ctx.font = 'bold 8.5px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('ANOMALY', x, y - 8);
+        }
+      });
+    }
+
+    // Timestamps at bottom
+    if (buffer.length > 1) {
       ctx.fillStyle = '#94A3B8';
       ctx.font = '9.5px "JetBrains Mono", monospace';
       ctx.textAlign = 'left';
-      ctx.fillText(this.data.timestamps[0] || '', this.padding.left, height - 10);
-
+      ctx.fillText(buffer[0].timeStr || '', pad.left, height - 8);
       ctx.textAlign = 'right';
-      ctx.fillText(
-        this.data.timestamps[this.data.timestamps.length - 1] || '',
-        this.padding.left + plotW,
-        height - 10
-      );
+      ctx.fillText(buffer[buffer.length - 1].timeStr || '', pad.left + plotW, height - 8);
     }
-  }
-
-  drawGrid(ctx, width, height, plotW, plotH, minTemp, maxTemp, getY) {
-    ctx.strokeStyle = 'rgba(226, 232, 240, 0.7)';
-    ctx.lineWidth = 1;
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = '10px "Inter", sans-serif';
-    ctx.textAlign = 'right';
-
-    const steps = [15, 30, 45, 60];
-    steps.forEach((val) => {
-      const y = getY(val);
-      ctx.beginPath();
-      ctx.moveTo(this.padding.left, y);
-      ctx.lineTo(this.padding.left + plotW, y);
-      ctx.stroke();
-
-      ctx.fillText(`${val}°`, this.padding.left - 8, y + 3.5);
-    });
-  }
-
-  drawEmptyState(width, height) {
-    this.ctx.fillStyle = '#94A3B8';
-    this.ctx.font = '12px "Inter", sans-serif';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText('Streaming telemetry data...', width / 2, height / 2);
   }
 }
 
