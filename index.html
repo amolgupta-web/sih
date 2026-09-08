@@ -386,7 +386,7 @@
               <div id="investigate-evidence-list" class="evidence-list"></div>
             </div>
 
-            <div class="reality-check-card">
+            <div class="reality-check-card" id="reality-check-wrapper">
               <div>
                 <h4 style="font-size:0.95rem; font-weight:700">Reality Check: Weather or Sensor Fault?</h4>
                 <p style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px">
@@ -398,10 +398,10 @@
                 <div class="reality-side-col weather-side">
                   <span class="reality-col-title" style="color:var(--status-trusted)">Genuine Weather Event</span>
                   <ul class="reality-check-list">
-                    <li>✕ Nearby stations confirm change</li>
-                    <li>✕ Pressure supports event</li>
-                    <li>✕ Multiple parameters consistent</li>
-                    <li>✕ Realistic temporal transition</li>
+                    <li><span style="color:#D9534F; font-weight:800; margin-right:4px;">✕</span> Nearby stations confirm change</li>
+                    <li><span style="color:#D9534F; font-weight:800; margin-right:4px;">✕</span> Pressure supports event</li>
+                    <li><span style="color:#D9534F; font-weight:800; margin-right:4px;">✕</span> Multiple parameters consistent</li>
+                    <li><span style="color:#D9534F; font-weight:800; margin-right:4px;">✕</span> Realistic temporal transition</li>
                   </ul>
                   <div style="margin-top:auto; font-size:0.72rem; color:var(--status-trusted); font-weight:700">
                     Evidence Support: 4%
@@ -411,10 +411,10 @@
                 <div class="reality-side-col anomaly-side">
                   <span class="reality-col-title" style="color:var(--status-critical)">Sensor Anomaly</span>
                   <ul class="reality-check-list">
-                    <li>✓ Isolated sensor spike</li>
-                    <li>✓ Unrealistic rate of change</li>
-                    <li>✓ Other sensors disagree</li>
-                    <li>✓ Historical baseline violated</li>
+                    <li><span style="color:#2E9B73; font-weight:800; margin-right:4px;">✓</span> Isolated sensor spike</li>
+                    <li><span style="color:#2E9B73; font-weight:800; margin-right:4px;">✓</span> Unrealistic rate of change</li>
+                    <li><span style="color:#2E9B73; font-weight:800; margin-right:4px;">✓</span> Other sensors disagree</li>
+                    <li><span style="color:#2E9B73; font-weight:800; margin-right:4px;">✓</span> Historical baseline violated</li>
                   </ul>
                   <div style="margin-top:auto; font-size:0.72rem; color:var(--status-critical); font-weight:700">
                     Evidence Support: 96%
